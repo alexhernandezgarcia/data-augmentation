@@ -1,0 +1,25 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+defaults:
+  - override /datamodule: moons.yaml
+  - override /model: mlp.yaml
+  - override /callbacks: default.yaml
+  - override /logger: wandb.yaml
+  - override /trainer: default.yaml
+
+name: "first_experiment"
+seed: 12345
+
+trainer:
+  min_epochs: 10
+  max_epochs: 10
+
+datamodule:
+  dataset:
+    n_samples: 100
+
+logger:
+  wandb:
+    tags: ["moons", "${name}"]

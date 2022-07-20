@@ -5,6 +5,7 @@ import pytorch_lightning as pl
 import more_itertools as mit
 from collections import OrderedDict
 from torchmetrics.classification.accuracy import Accuracy
+from torchmetrics import F1Score
 from torchmetrics import MaxMetric
 from src import utils
 
@@ -49,6 +50,10 @@ class MLP(pl.LightningModule):
         self.val_acc = Accuracy()
         self.test_acc = Accuracy()
 
+        self.train_f1 = F1Score()
+        self.val_f1 = F1Score()
+        self.test_f1 = F1Score()
+
         # for logging best so far validation accuracy
         self.val_acc_best = MaxMetric()
 
@@ -76,8 +81,10 @@ class MLP(pl.LightningModule):
 
         # log train metrics
         acc = self.train_acc(preds, targets)
+        f1 = self.train_f1(preds, targets)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         self.log("train/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("train/f1", f1, on_step=False, on_epoch=True, prog_bar=True)
 
         # we can return here dict with any tensors
         # and then read it in some callback or in `training_epoch_end()` below
@@ -88,14 +95,16 @@ class MLP(pl.LightningModule):
         # `outputs` is a list of dicts returned from `training_step()`
         pass
 
-
     def validation_step(self, batch: Any, batch_idx: int):
         loss, preds, targets = self.step(batch)
 
         # log val metrics
         acc = self.val_acc(preds, targets)
+        f1 = self.val_f1(preds, targets)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         self.log("val/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/f1", f1, on_step=False, on_epoch=True, prog_bar=True)
+
 
         return {"loss": loss, "preds": preds, "targets": targets}
 
@@ -110,9 +119,10 @@ class MLP(pl.LightningModule):
 
         # log test metrics
         acc = self.test_acc(preds, targets)
+        f1 = self.test_f1(preds, targets)
         self.log("test/loss", loss, on_step=False, on_epoch=True)
         self.log("test/acc", acc, on_step=False, on_epoch=True)
-
+        self.log("test/f1", f1, on_step=False, on_epoch=True)
         return {"loss": loss, "preds": preds, "targets": targets}
 
     def test_epoch_end(self, outputs: List[Any]):
@@ -123,6 +133,10 @@ class MLP(pl.LightningModule):
         self.train_acc.reset()
         self.test_acc.reset()
         self.val_acc.reset()
+
+        self.train_f1.reset()
+        self.test_f1.reset()
+        self.val_f1.reset()
 
 
     def configure_optimizers(self):

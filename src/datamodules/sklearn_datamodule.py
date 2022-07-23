@@ -7,7 +7,6 @@ from src.utils.pylogger import get_pylogger
 log = get_pylogger(__name__)
 
 
-
 def create_sklearn_datamodule(dataset: Tuple[np.ndarray, np.ndarray], data_aug: Callable = None,
                               *args: object, **kwargs: object) -> LightningDataModule:
     """

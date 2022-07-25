@@ -1,0 +1,10 @@
+# create decision boundary
+decision_boundary:
+  _target_: src.callbacks.wandb_callbacks.LogDecisionBoundary
+  dirpath: ${paths.output_dir}  # path where to store decision boundary plot default is under the experiment logs
+
+
+watch_model:
+  _target_: src.callbacks.wandb_callbacks.WatchModel
+  log: "all"
+  log_freq: 100

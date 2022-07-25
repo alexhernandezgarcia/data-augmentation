@@ -293,7 +293,13 @@ class LogDecisionBoundary(Callback):
     under the logs directory for the experiment
     """
 
-    def __init__(self):
+    def __init__(self, dirpath: str):
+        """
+        Constructor for LogDecisionBoundary callback
+        Args:
+            dirpath (str): path where to save the decision boundary
+        """
+        self.dirpath = dirpath
         pass
 
     def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
@@ -308,8 +314,7 @@ class LogDecisionBoundary(Callback):
         self._show_separation(model=pl_module, experiment_logger=experiment, X=valX, y=valY)
         pl_module.train()  # put model back to train mode
 
-    @staticmethod
-    def _show_separation(model: pl.LightningModule, experiment_logger, X, y, save=True):
+    def _show_separation(self, model: pl.LightningModule, experiment_logger, X, y, save=True):
         sn.set(style="white")
 
         xx, yy = np.mgrid[-1.5:2.5:.01, -1.:1.5:.01]
@@ -334,7 +339,7 @@ class LogDecisionBoundary(Callback):
 
         ax.set(xlabel="$X_1$", ylabel="$X_2$")
         if save:
-            plt.savefig("decsion_boundary.png")
+            plt.savefig(self.dirpath+"/decision_boundary.png")
 
         experiment_logger.log({f"decision_boundary/{experiment_logger.name}": wandb.Image(plt)}, commit=False)
         plt.clf()

@@ -436,7 +436,11 @@ class LogWeightBiasDistribution(Callback):
         path.mkdir(parents=True, exist_ok=True)
         plt.savefig(path / (name + ".png"))
 
-        experiment_logger.log({f'parameter_values_{stage}_training/{name}': wandb.Image(plt)})
+        # experiment_logger.log({f'parameter_values_{stage}_training/{name}': wandb.Image(plt)})
+
+        # passing plt crashes the program bug report created.
+        # https://github.com/wandb/wandb/issues/3987
+        # experiment_logger.log({f'parameter_values_{stage}_training/{name}': plt})
 
         # column_name = 'weight' if 'weight' in name else 'bias'
         #

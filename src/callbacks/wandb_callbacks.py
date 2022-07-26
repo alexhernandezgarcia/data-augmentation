@@ -38,14 +38,15 @@ def get_wandb_logger(trainer: Trainer) -> WandbLogger:
 class WatchModel(Callback):
     """Make wandb watch model at the beginning of the run."""
 
-    def __init__(self, log: str = "gradients", log_freq: int = 100):
+    def __init__(self, log: str = "gradients", log_freq: int = 100, log_graph=True):
         self.log = log
         self.log_freq = log_freq
+        self.log_graph = log_graph
 
     @rank_zero_only
     def on_train_start(self, trainer, pl_module):
         logger = get_wandb_logger(trainer=trainer)
-        logger.watch(model=trainer.model, log=self.log, log_freq=self.log_freq, log_graph=True)
+        logger.watch(model=trainer.model, log=self.log, log_freq=self.log_freq, log_graph=self.log_graph)
 
 
 class UploadCodeAsArtifact(Callback):
@@ -289,7 +290,7 @@ class LogImagePredictions(Callback):
 
 class LogDecisionBoundary(Callback):
     """
-    Logs decision boundary on the validation set. The decision boundary itself is saved as decsion_boundary.png
+    Logs decision boundary on the validation set. The decision boundary itself is saved as decision_boundary.png
     under the logs directory for the experiment
     """
 
@@ -300,9 +301,15 @@ class LogDecisionBoundary(Callback):
             dirpath (str): path where to save the decision boundary
         """
         self.dirpath = dirpath
-        pass
 
     def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        """
+               Callback runs when training ends
+               Args:
+                   trainer: lightning trainer
+                   pl_module: lightning module
+        """
+
         logger = get_wandb_logger(trainer=trainer)
         experiment = logger.experiment
 
@@ -314,7 +321,18 @@ class LogDecisionBoundary(Callback):
         self._show_separation(model=pl_module, experiment_logger=experiment, X=valX, y=valY)
         pl_module.train()  # put model back to train mode
 
-    def _show_separation(self, model: pl.LightningModule, experiment_logger, X, y, save=True):
+    def _show_separation(self, model: pl.LightningModule, experiment_logger: WandbLogger.experiment,
+                         X: np.ndarray, y: np.ndarray, save: bool = True):
+        """
+        Plots and logs decision boundary for a model and dataset (X, y)
+
+        Args:
+            model (pl.LightningModule):  lightning module
+            experiment_logger (WandbLogger.experiment):  Wandb experiment run logger
+            X (np.ndarray): Dataset samples
+            y (np.ndarray) : Dataset labels
+            save (bool): whether to save decision boundary plot or not.
+        """
         sn.set(style="white")
 
         xx, yy = np.mgrid[-1.5:2.5:.01, -1.:1.5:.01]
@@ -343,4 +361,89 @@ class LogDecisionBoundary(Callback):
 
         experiment_logger.log({f"decision_boundary/{experiment_logger.name}": wandb.Image(plt)}, commit=False)
         plt.clf()
+
+
+class LogWeightBiasDistribution(Callback):
+    """
+    Logs weights and bias distribution. The distribution plots are saved user the distribution plots directory under
+    the logs directory
+    """
+
+    def __init__(self, dirpath: str):
+        """
+        Constructor for LogDecisionBoundary callback
+        Args:
+            dirpath (str): path where to save the decision boundary
+        """
+        self.dirpath = dirpath
+
+        # subdirectory where plots of before and after training can be found
+        self._plots_directory = "distribution_plots"
+
+    def on_train_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        """
+        Callback runs when training is about to starts
+        Args:
+            trainer: lightning trainer
+            pl_module: lightning module
+        """
+        # get the wandb logger
+        logger = get_wandb_logger(trainer=trainer)
+        experiment = logger.experiment
+
+        # get parameters and their names and send them to plot_distribution
+        for name, param in pl_module.named_parameters():
+            # print(name, param)
+            self.plot_distribution(name, param.data.numpy().ravel(), stage="before", experiment_logger=experiment)
+
+    def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        """
+        Callback runs when training ends
+        Args:
+            trainer: lightning trainer
+            pl_module: lightning module
+        """
+        # get the wandb logger
+        logger = get_wandb_logger(trainer=trainer)
+        experiment = logger.experiment
+
+        # get parameters and their names and send them to plot_distribution
+        for name, param in pl_module.named_parameters():
+            # print(name, param)
+            self.plot_distribution(name, param.data.numpy().ravel(), stage="after", experiment_logger=experiment)
+
+    def plot_distribution(self, name: str, data: np.ndarray, stage: str, experiment_logger: WandbLogger.experiment) -> None:
+        """
+        Plots the distribution of data using Seaborn KDE plot, the plot is saved under the directory given by
+        self_plots_directory under the log directory for the run
+        Args:
+            name (str) : parameter name
+            data (np.ndarray) : flat numpy.ndarray
+            stage (str) : the stage of the callback either "before" or "after" training
+            experiment_logger (WandbLogger.experiment): the wandb logger object
+        """
+        # set figure size
+        plt.figure(figsize=(16, 10))
+        # set font size
+        plt.rcParams.update({'font.size': 22})
+        plt.title(name)
+        sn.kdeplot(data=data, shade=True, color='red' if "weight" in name else 'blue')
+        plt.xlabel("Weight values")
+
+        # create path
+        path = Path(self.dirpath)
+        path = path / self._plots_directory / stage
+        path.mkdir(parents=True, exist_ok=True)
+        plt.savefig(path / (name + ".png"))
+
+        experiment_logger.log({f'parameter_values_{stage}_training/{name}': wandb.Image(plt)})
+
+        # column_name = 'weight' if 'weight' in name else 'bias'
+        #
+        # table = wandb.Table(data=np.expand_dims(data.ravel(), axis=1).tolist(), columns=[column_name])
+        #
+        # experiment_logger.log({f'parameter_values_{stage}_training/{name}': wandb.plot.histogram(table=table,
+        #                                                                                          value=column_name,
+        #                                                                                          title=name)})
+
 

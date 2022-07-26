@@ -6,5 +6,10 @@ decision_boundary:
 
 watch_model:
   _target_: src.callbacks.wandb_callbacks.WatchModel
-  log: "all"
+  log: "all" # log gradients, parameter histogram and model topology
   log_freq: 100
+  log_graph: True
+
+LogWeightBiasDistribution:
+  _target_: src.callbacks.wandb_callbacks.LogWeightBiasDistribution
+  dirpath: ${paths.output_dir}  # path where to store weight and bias distribution plots, default is under the experiment logs

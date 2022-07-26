@@ -12,6 +12,12 @@ from pytorch_lightning.loggers import LoggerCollection, WandbLogger
 from pytorch_lightning.utilities import rank_zero_only
 from sklearn import metrics
 from sklearn.metrics import f1_score, precision_score, recall_score
+import plotly.figure_factory as ff
+from src.utils import pylogger
+
+
+log = pylogger.get_pylogger(__name__)
+
 
 
 def get_wandb_logger(trainer: Trainer) -> WandbLogger:
@@ -411,6 +417,17 @@ class LogWeightBiasDistribution(Callback):
         for name, param in pl_module.named_parameters():
             # print(name, param)
             self.plot_distribution(name, param.data.numpy().ravel(), stage="after", experiment_logger=experiment)
+
+    def plot_distribution_plotly(self, name: str, data: np.ndarray, stage: str,
+                                 experiment_logger: WandbLogger.experiment) -> None:
+        if data.size <= 1:
+            log.warning(f"Parameter {name} has just 1 element, can't plot it using Plotly, ignoring...")
+            return
+        color = 'firebrick' if "weight" in name else 'cornflowerblue'
+        fig = ff.create_distplot([data], [name], colors=[color], show_rug=False)
+        # fig = ff.create_distplot([data], [name], colors=colors, show_rug=False)
+        fig.update_layout(title_text=name) #, title_x=0.5, title_font_size=20)
+        experiment_logger.log({f'parameter_values_{stage}_training/{name}': fig})
 
     def plot_distribution(self, name: str, data: np.ndarray, stage: str, experiment_logger: WandbLogger.experiment) -> None:
         """

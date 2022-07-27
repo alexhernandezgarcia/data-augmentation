@@ -29,6 +29,10 @@ pipenv install --dev
 
 # activate environment created pipenv
 pipenv shell
+
+
+# to install a new packagae
+pipenv install <PACKAGE_NAME>
 ```
 
 Train model with a experiment configuration from [configs/experiment/](configs/experiment/)

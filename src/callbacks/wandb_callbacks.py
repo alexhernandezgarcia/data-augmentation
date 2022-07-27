@@ -339,7 +339,7 @@ class LogDecisionBoundary(Callback):
             y (np.ndarray) : Dataset labels
             save (bool): whether to save decision boundary plot or not.
         """
-        sn.set(style="white")
+        sn.set(style="darkgrid", font_scale=1.4)
 
         xx, yy = np.mgrid[-1.5:2.5:.01, -1.:1.5:.01]
         grid = np.c_[xx.ravel(), yy.ravel()]
@@ -468,3 +468,79 @@ class LogWeightBiasDistribution(Callback):
         #                                                                                          title=name)})
 
 
+class LogSklearnDatasetPlots(Callback):
+    """
+    Logs Sklearn dataset plots from the datamodule
+    """
+
+    def __init__(self, dirpath: str):
+        """
+        Constructor for LogSklearnDatasetPlots callback
+        Args:
+            dirpath (str): path where to save the dataset plots
+        """
+        self.dirpath = dirpath
+
+        # subdirectory where plots of before and after training can be found
+        self._plots_directory = "dataset_plots"
+
+    def on_train_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        """
+        Callback runs when training is about to starts
+        Args:
+            trainer: lightning trainer
+            pl_module: lightning module
+        """
+        # get the wandb logger
+        logger = get_wandb_logger(trainer=trainer)
+        experiment = logger.experiment
+
+        # plot and log training data
+        dataset = trainer.datamodule.train_dataloader().dataset
+        xlim, y_lim = self.plot_dataset(dataset_name="Train", data_X=dataset.X, data_Y=dataset.Y, experiment_logger=experiment)
+
+        # plot and log validation data
+        dataset = trainer.datamodule.val_dataloader().dataset
+        self.plot_dataset(dataset_name="Validation", data_X=dataset.X, data_Y=dataset.Y, experiment_logger=experiment, x_lim=xlim, y_lim=y_lim)
+
+        # plot and log test data
+        dataset = trainer.datamodule.test_dataloader().dataset
+        self.plot_dataset(dataset_name="Test", data_X=dataset.X, data_Y=dataset.Y, experiment_logger=experiment, x_lim=xlim, y_lim=y_lim)
+
+    def plot_dataset(self, dataset_name: str, data_X: np.ndarray, data_Y: np.ndarray, experiment_logger: WandbLogger.experiment,
+                     x_lim: tuple = None, y_lim: tuple = None) -> tuple[tuple, tuple]:
+        """
+        Plots the scatter plot of a Sklearn dataset and logs to wandb as an image
+        Args:
+            dataset_name (str) : name of the dataset to plot, used in title
+            data_X (np.ndarray) : Dataset samples
+            data_Y (np.ndarray) : Dataset labels
+            experiment_logger (WandbLogger.experiment): the wandb logger object
+            x_lim (tuple): a left and right limit of the x-axis. Default None
+            y_lim (tuple): a left and right limit of the y-axis. Default None
+
+        Returns
+            x_lim, y_lim (tuple[tuple, tuple]): a tuple with two tuples denoting the x_lim and y_lim of the plot that
+                                                is created.
+        """
+        sn.set(style="darkgrid", font_scale=1.4)
+
+        # set figure size
+        plt.figure(figsize=(16, 10))
+        # set font size
+        plt.title(f"{dataset_name} Dataset ({len(data_X)} Samples)")
+        colors = np.array(['red', 'green'])
+        plt.scatter(data_X[:, 0], data_X[:, 1], color=list(colors[data_Y.flatten()]))
+        if x_lim and y_lim:
+            plt.xlim(x_lim)
+            plt.ylim(y_lim)
+
+        # create path
+        path = Path(self.dirpath)
+        path = path / self._plots_directory
+        path.mkdir(parents=True, exist_ok=True)
+        plt.savefig(path / f"{dataset_name}_Dataset.png")
+
+        experiment_logger.log({f'Charts/{dataset_name}_dataset': wandb.Image(plt)})
+
+        return plt.xlim(), plt.ylim()

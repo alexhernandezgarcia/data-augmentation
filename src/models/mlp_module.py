@@ -13,7 +13,7 @@ log = get_pylogger(__name__)
 
 
 # define a Multi-Layer Perceptron
-class MLP(pl.LightningModule):
+class MLPLitModule(pl.LightningModule):
     def __init__(self, layers: List[int], lr: float = 0.001) -> None:
         """
         Constructor for a multi-layer perceptron style network with ReLU activations in hidden layers and Stochastic

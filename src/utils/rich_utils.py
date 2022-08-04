@@ -42,7 +42,6 @@ def print_config_tree(
     tree = rich.tree.Tree("CONFIG", style=style, guide_style=style)
 
     queue = []
-    OmegaConf.resolve(cfg)
 
     # add fields from `print_order` to queue
     for field in print_order:
@@ -95,7 +94,6 @@ def enforce_tags(cfg: DictConfig, save_to_file: bool = False) -> None:
 
     if save_to_file:
         with open(Path(cfg.paths.output_dir, "tags.log"), "w") as file:
-            OmegaConf.resolve(cfg.tags)
             rich.print(cfg.tags, file=file)
 
 

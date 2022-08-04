@@ -1,0 +1,14 @@
+_target_: src.datamodules.sklearn_datamodule.create_sklearn_datamodule
+dataset:
+  _target_: sklearn.datasets.make_moons
+  n_samples: 20
+  shuffle: True
+
+data_aug:
+  _partial_: True
+  _target_: src.data_augmentations.gaussian.augment_data
+  noise: 0.05
+  iterations: 5
+
+
+

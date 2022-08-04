@@ -1,0 +1,38 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+defaults:
+  - override /datamodule: moons.yaml
+  - override /model: mlp.yaml
+  - override /callbacks: default_with_wandb_callbacks.yaml
+  - override /logger: wandb.yaml
+  - override /trainer: default.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+task_name: "moons_experiment"
+tags:
+  - moons
+  - ${task_name}  # dynamically interpolated to the task_name variable
+  - ${datamodule.dataset.n_samples}_base_samples  # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
+
+seed: 12345
+
+trainer:
+  min_epochs: 10
+  max_epochs: 10
+
+datamodule:
+  dataset:
+    n_samples: 1000
+
+logger:
+  wandb:
+    tags: ${tags}  # tags defined above
+    project: "template-tests"
+
+
+
+
+

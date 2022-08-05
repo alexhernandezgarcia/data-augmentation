@@ -4,11 +4,12 @@ dataset:
   n_samples: 20
   shuffle: True
 
+# The augmentation function to use.
+# The effective training size becomes n_samples * (n_augmentations + 1)
 data_aug:
   _partial_: True
   _target_: src.data_augmentations.gaussian.augment_data
-  noise: 0.05
-  iterations: 5
-
+  noise: 0.05 # the noise added to the augmented samples
+  n_augmentations: 0  # number of augmentation iteration.
 
 

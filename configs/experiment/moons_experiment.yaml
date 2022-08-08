@@ -15,7 +15,7 @@ task_name: "moons_experiment"
 tags:
   - moons
   - ${task_name}  # dynamically interpolated to the task_name variable
-  - ${datamodule.dataset.n_samples}_base_samples  # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
+  - ${datamodule.train_dataset.n_samples}_base_samples  # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
 
 seed: 12345
 
@@ -24,7 +24,7 @@ trainer:
   max_epochs: 10
 
 datamodule:
-  dataset:
+  train_dataset:
     n_samples: 1000
 
 logger:

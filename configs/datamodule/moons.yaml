@@ -1,8 +1,10 @@
 _target_: src.datamodules.sklearn_datamodule.create_sklearn_datamodule
-dataset:
+
+train_dataset:
   _target_: sklearn.datasets.make_moons
   n_samples: 20
   shuffle: True
+  random_state: 1234 # for reproducible output across multiple function calls
 
 # The augmentation function to use.
 # The effective training size becomes n_samples * (n_augmentations + 1)

@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 log = get_pylogger(__name__)
 
 
-def create_sklearn_datamodule(dataset: Tuple[np.ndarray, np.ndarray], data_aug: Callable = None,
+def create_sklearn_datamodule(train_dataset: Tuple[np.ndarray, np.ndarray], data_aug: Callable = None,
                               val_split: float = 0.2, test_split: float = 0.1,
                               *args: object, **kwargs: object) -> LightningDataModule:
     """
@@ -17,7 +17,7 @@ def create_sklearn_datamodule(dataset: Tuple[np.ndarray, np.ndarray], data_aug: 
     # Parameters that can be passed as args and kwargs:
     # https://pytorch-lightning-bolts.readthedocs.io/en/latest/datamodules_sklearn.html#sklearn-datamodule-class
     Args:
-        dataset (Tuple[np.ndarray, np.ndarray]): a Sklearn dataset, can be instantiated using Hydra
+        train_dataset (Tuple[np.ndarray, np.ndarray]): a Sklearn dataset, can be instantiated using Hydra
         data_aug (Callable): a callable function/class/object that takes in the X (sample points) and Y (labels) and
                              return augmented dataset new_X and new_Y
         val_split (float): validation split proportion. Default 0.2
@@ -29,7 +29,7 @@ def create_sklearn_datamodule(dataset: Tuple[np.ndarray, np.ndarray], data_aug: 
         datamodule (LightningDataModule): a PytorchLightening Datamodule
 
     """
-    X_train, y_train = dataset
+    X_train, y_train = train_dataset
     y_train = np.reshape(y_train, (len(y_train), 1))  # reshape to be (len(y_train), 1) vector instead of a flat array
 
     # create validation set from X_train, y_train

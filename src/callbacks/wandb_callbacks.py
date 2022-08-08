@@ -400,6 +400,7 @@ class LogWeightBiasDistribution(Callback):
         # get parameters and their names and send them to plot_distribution
         for name, param in pl_module.named_parameters():
             # print(name, param)
+            self.save_params_as_numpy(name, param.data.numpy(), stage="before")
             self.plot_distribution(name, param.data.numpy().ravel(), stage="before", experiment_logger=experiment)
 
     def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
@@ -416,7 +417,15 @@ class LogWeightBiasDistribution(Callback):
         # get parameters and their names and send them to plot_distribution
         for name, param in pl_module.named_parameters():
             # print(name, param)
+            self.save_params_as_numpy(name, param.data.numpy(), stage="after")
             self.plot_distribution(name, param.data.numpy().ravel(), stage="after", experiment_logger=experiment)
+
+    def save_params_as_numpy(self, param_name: str, data: np.ndarray, stage: str) -> None:
+        # create path
+        path = Path(self.dirpath)
+        path = path / self._plots_directory / stage
+        path.mkdir(parents=True, exist_ok=True)
+        np.save(file=str(path/param_name), arr=data)  # save weights as a .npy file
 
     def plot_distribution_plotly(self, name: str, data: np.ndarray, stage: str,
                                  experiment_logger: WandbLogger.experiment) -> None:

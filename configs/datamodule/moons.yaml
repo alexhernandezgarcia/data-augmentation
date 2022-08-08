@@ -6,6 +6,16 @@ train_dataset:
   shuffle: True
   random_state: 1234 # for reproducible output across multiple function calls
 
+val_dataset:
+  _target_: sklearn.datasets.make_moons  # use the same Sklearn data generation function being used in train_dataset
+  n_samples: 1000  # generate 1000 examples for validation
+  random_state: 1111 # set static seed value for reproducible validation set
+
+test_dataset:
+  _target_: sklearn.datasets.make_moons  # use the same Sklearn data generation function being used in train_dataset
+  n_samples: 1000  # generate 1000 examples for test
+  random_state: 2222 # set static seed value for reproducible test set
+
 # The augmentation function to use.
 # The effective training size becomes n_samples * (n_augmentations + 1)
 data_aug:

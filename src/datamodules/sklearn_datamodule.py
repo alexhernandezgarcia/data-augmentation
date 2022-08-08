@@ -8,9 +8,11 @@ from sklearn.model_selection import train_test_split
 log = get_pylogger(__name__)
 
 
-def create_sklearn_datamodule(train_dataset: Tuple[np.ndarray, np.ndarray], data_aug: Callable = None,
-                              val_split: float = 0.2, test_split: float = 0.1,
-                              *args: object, **kwargs: object) -> LightningDataModule:
+def create_sklearn_datamodule(train_dataset: Tuple[np.ndarray, np.ndarray],
+                              val_dataset: Tuple[np.ndarray, np.ndarray],
+                              test_dataset: Tuple[np.ndarray, np.ndarray],
+                              data_aug: Callable = None, *args: object,
+                              **kwargs: object) -> LightningDataModule:
     """
     Helper function to create a LightningDataModule for Sklearn datasets.
 
@@ -18,10 +20,12 @@ def create_sklearn_datamodule(train_dataset: Tuple[np.ndarray, np.ndarray], data
     # https://pytorch-lightning-bolts.readthedocs.io/en/latest/datamodules_sklearn.html#sklearn-datamodule-class
     Args:
         train_dataset (Tuple[np.ndarray, np.ndarray]): a Sklearn dataset, can be instantiated using Hydra
+        val_dataset (Tuple[np.ndarray, np.ndarray]): a fixed Sklearn dataset to be used as validation dataset,
+                                                     can be initialized through hydra
+        test_dataset (Tuple[np.ndarray, np.ndarray]): a fixed Sklearn dataset to be used as test dataset, 
+                                                      can be initialized through hydra
         data_aug (Callable): a callable function/class/object that takes in the X (sample points) and Y (labels) and
                              return augmented dataset new_X and new_Y
-        val_split (float): validation split proportion. Default 0.2
-        test_split (float): test split proportion. Default 0.1
         *args: arguments for SklearnDataModule (see comment above for full list of args)
         **kwargs: keyword arguments for SklearnDataModule (see comment above for full list of kwargs)
 
@@ -32,11 +36,13 @@ def create_sklearn_datamodule(train_dataset: Tuple[np.ndarray, np.ndarray], data
     X_train, y_train = train_dataset
     y_train = np.reshape(y_train, (len(y_train), 1))  # reshape to be (len(y_train), 1) vector instead of a flat array
 
-    # create validation set from X_train, y_train
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=val_split)
+    # setup validation set
+    X_val, y_val = val_dataset
+    y_val = np.reshape(y_val, (len(y_val), 1))
 
-    # create test set from X_train, y_train
-    X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=test_split)
+    # setup test dataset
+    X_test, y_test = test_dataset
+    y_test = np.reshape(y_test, (len(y_test), 1))
 
     # augment data if a data_aug callable function is provided
     if data_aug:

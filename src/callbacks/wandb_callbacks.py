@@ -431,7 +431,7 @@ class LogWeightBiasDistribution(Callback):
 
     def plot_distribution(self, name: str, data: np.ndarray, stage: str, experiment_logger: WandbLogger.experiment) -> None:
         """
-        Plots the distribution of data using Seaborn KDE plot, the plot is saved under the directory given by
+        Plots the distribution of data using Seaborn Histplot plot, the plot is saved under the directory given by
         self_plots_directory under the log directory for the run
         Args:
             name (str) : parameter name
@@ -444,7 +444,8 @@ class LogWeightBiasDistribution(Callback):
         # set font size
         plt.rcParams.update({'font.size': 22})
         plt.title(name)
-        sn.kdeplot(data=data, shade=True, color='red' if "weight" in name else 'blue')
+        # sn.kdeplot(data=data, shade=True, color='red' if "weight" in name else 'blue')
+        sn.histplot(data=data, color='red' if "weight" in name else 'blue', kde=True)
         plt.xlabel("Weight values")
 
         # create path

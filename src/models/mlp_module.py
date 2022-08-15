@@ -59,9 +59,9 @@ class MLPLitModule(pl.LightningModule):
         self.val_acc = Accuracy()
         self.test_acc = Accuracy()
 
-        self.train_f1 = F1Score()
-        self.val_f1 = F1Score()
-        self.test_f1 = F1Score()
+        self.train_f1 = F1Score(multiclass=False)
+        self.val_f1 = F1Score(multiclass=False)
+        self.test_f1 = F1Score(multiclass=False)
 
         # for logging best so far validation accuracy
         self.val_acc_best = MaxMetric()

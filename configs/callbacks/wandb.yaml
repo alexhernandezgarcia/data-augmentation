@@ -18,3 +18,6 @@ LogWeightBiasDistribution:
 LogSklearnDatasetPlots:
   _target_: src.callbacks.wandb_callbacks.LogSklearnDatasetPlots
   dirpath: ${paths.output_dir}  # path where to store dataset plots, default is under the experiment logs
+
+AddToConfigEffectiveTrainSize:
+  _target_: src.callbacks.wandb_callbacks.AddToConfigEffectiveTrainSize

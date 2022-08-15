@@ -554,3 +554,32 @@ class LogSklearnDatasetPlots(Callback):
         experiment_logger.log({f'Charts/{dataset_name}_dataset': wandb.Image(plt)})
 
         return plt.xlim(), plt.ylim()
+
+
+class AddToConfigEffectiveTrainSize(Callback):
+    """
+    Logs a simple metric: Effective Training Set Size (ETSS)
+        ETSS = num_training_samples * (n_augmentations + 1 ) = Total training set size
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def on_train_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        """
+               Callback runs when training starts
+               Args:
+                   trainer: lightning trainer
+                   pl_module: lightning module
+        """
+
+        logger = get_wandb_logger(trainer=trainer)
+        experiment = logger.experiment
+
+        # get train data
+        train_data = trainer.datamodule.train_dataloader().dataset
+        valX, valY = train_data.X, train_data.Y
+
+        experiment.config.update({"effective_training_size": len(valY)})
+
+

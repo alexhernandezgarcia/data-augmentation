@@ -174,11 +174,11 @@ class LogConfusionMatrix(Callback):
             # names should be unique or else charts from different experiments in wandb will overlap
             experiment.log({f"confusion_matrix/{experiment.name}": wandb.Image(plt)}, commit=False)
 
-            # according to wandb docs this should also work but it crashes
+            # according to wandb docs this should also work, but it crashes
             # experiment.log(f{"confusion_matrix/{experiment.name}": plt})
 
-            # reset plot
-            plt.clf()
+            # close plot
+            plt.close("all")
 
             self.preds.clear()
             self.targets.clear()
@@ -241,7 +241,7 @@ class LogF1PrecRecHeatmap(Callback):
             experiment.log({f"f1_p_r_heatmap/{experiment.name}": wandb.Image(plt)}, commit=False)
 
             # reset plot
-            plt.clf()
+            plt.close("all")
 
             self.preds.clear()
             self.targets.clear()
@@ -343,9 +343,9 @@ class LogDecisionBoundary(Callback):
 
         xx, yy = np.mgrid[-1.5:2.5:.01, -1.:1.5:.01]
         grid = np.c_[xx.ravel(), yy.ravel()]
-        batch = torch.from_numpy(grid).type(torch.float32)
+        batch = torch.from_numpy(grid).type(torch.float32).to(device=model.device)
         with torch.no_grad():
-            probs = torch.sigmoid(model(batch).reshape(xx.shape))
+            probs = torch.sigmoid(model(batch).reshape(xx.shape)).cpu()
             probs = probs.numpy().reshape(xx.shape)
 
         f, ax = plt.subplots(figsize=(16, 10))
@@ -366,7 +366,8 @@ class LogDecisionBoundary(Callback):
             plt.savefig(self.dirpath+"/decision_boundary.png")
 
         experiment_logger.log({f"decision_boundary/{experiment_logger.name}": wandb.Image(plt)}, commit=False)
-        plt.clf()
+        # close plot
+        plt.close('all')
 
 
 class LogWeightBiasDistribution(Callback):
@@ -400,7 +401,8 @@ class LogWeightBiasDistribution(Callback):
         # get parameters and their names and send them to plot_distribution
         for name, param in pl_module.named_parameters():
             # print(name, param)
-            self.plot_distribution(name, param.data.numpy().ravel(), stage="before", experiment_logger=experiment)
+            self.save_params_as_numpy(name, param.cpu().data.numpy(), stage="before")
+            self.plot_distribution(name, param.cpu().data.numpy().ravel(), stage="before", experiment_logger=experiment)
 
     def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         """
@@ -416,7 +418,15 @@ class LogWeightBiasDistribution(Callback):
         # get parameters and their names and send them to plot_distribution
         for name, param in pl_module.named_parameters():
             # print(name, param)
-            self.plot_distribution(name, param.data.numpy().ravel(), stage="after", experiment_logger=experiment)
+            self.save_params_as_numpy(name, param.cpu().data.numpy(), stage="after")
+            self.plot_distribution(name, param.cpu().data.numpy().ravel(), stage="after", experiment_logger=experiment)
+
+    def save_params_as_numpy(self, param_name: str, data: np.ndarray, stage: str) -> None:
+        # create path
+        path = Path(self.dirpath)
+        path = path / self._plots_directory / stage
+        path.mkdir(parents=True, exist_ok=True)
+        np.save(file=str(path/param_name), arr=data)  # save weights as a .npy file
 
     def plot_distribution_plotly(self, name: str, data: np.ndarray, stage: str,
                                  experiment_logger: WandbLogger.experiment) -> None:
@@ -427,11 +437,11 @@ class LogWeightBiasDistribution(Callback):
         fig = ff.create_distplot([data], [name], colors=[color], show_rug=False)
         # fig = ff.create_distplot([data], [name], colors=colors, show_rug=False)
         fig.update_layout(title_text=name) #, title_x=0.5, title_font_size=20)
-        experiment_logger.log({f'parameter_values_{stage}_training/{name}': fig})
+        experiment_logger.log({f'parameter_values_{stage}_training/{name}': fig}, commit=False)
 
     def plot_distribution(self, name: str, data: np.ndarray, stage: str, experiment_logger: WandbLogger.experiment) -> None:
         """
-        Plots the distribution of data using Seaborn KDE plot, the plot is saved under the directory given by
+        Plots the distribution of data using Seaborn Histplot plot, the plot is saved under the directory given by
         self_plots_directory under the log directory for the run
         Args:
             name (str) : parameter name
@@ -444,7 +454,8 @@ class LogWeightBiasDistribution(Callback):
         # set font size
         plt.rcParams.update({'font.size': 22})
         plt.title(name)
-        sn.kdeplot(data=data, shade=True, color='red' if "weight" in name else 'blue')
+        # sn.kdeplot(data=data, shade=True, color='red' if "weight" in name else 'blue')
+        sn.histplot(data=data, color='red' if "weight" in name else 'blue', kde=True)
         plt.xlabel("Weight values")
 
         # create path
@@ -453,7 +464,9 @@ class LogWeightBiasDistribution(Callback):
         path.mkdir(parents=True, exist_ok=True)
         plt.savefig(path / (name + ".png"))
 
-        experiment_logger.log({f'parameter_values_{stage}_training/{name}': wandb.Image(plt)})
+        experiment_logger.log({f'parameter_values_{stage}_training/{name}': wandb.Image(plt)}, commit=False)
+        # close plots
+        plt.close('all')
 
         # passing plt crashes the program bug report created.
         # https://github.com/wandb/wandb/issues/3987
@@ -541,6 +554,39 @@ class LogSklearnDatasetPlots(Callback):
         path.mkdir(parents=True, exist_ok=True)
         plt.savefig(path / f"{dataset_name}_Dataset.png")
 
-        experiment_logger.log({f'Charts/{dataset_name}_dataset': wandb.Image(plt)})
+        experiment_logger.log({f'Charts/{dataset_name}_dataset': wandb.Image(plt)}, commit=False)
+        xlim, y_lim = plt.xlim(), plt.ylim()
 
-        return plt.xlim(), plt.ylim()
+        # close plots
+        plt.close('all')
+
+        return xlim, y_lim
+
+
+class AddToConfigEffectiveTrainSize(Callback):
+    """
+    Logs a simple metric: Effective Training Set Size (ETSS)
+        ETSS = num_training_samples * (n_augmentations + 1 ) = Total training set size
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def on_train_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        """
+               Callback runs when training starts
+               Args:
+                   trainer: lightning trainer
+                   pl_module: lightning module
+        """
+
+        logger = get_wandb_logger(trainer=trainer)
+        experiment = logger.experiment
+
+        # get train data
+        train_data = trainer.datamodule.train_dataloader().dataset
+        valX, valY = train_data.X, train_data.Y
+
+        experiment.config.update({"effective_training_size": len(valY)})
+
+

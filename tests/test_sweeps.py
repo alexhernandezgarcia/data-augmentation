@@ -16,6 +16,7 @@ def test_experiments(tmp_path):
         "-m",
         "experiment=glob(*)",
         "hydra.sweep.dir=" + str(tmp_path),
+        "callbacks=default.yaml",
         "++trainer.fast_dev_run=true",
     ] + overrides
     run_sh_command(command)

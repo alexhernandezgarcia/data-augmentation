@@ -4,7 +4,7 @@ on:
   push:
     branches: [hydra-torch-workbench]
   pull_request:
-    branches: [hydra-torch-workbench "release/*"]
+    branches: [hydra-torch-workbench, "release/*"]
 
 jobs:
   run_tests:

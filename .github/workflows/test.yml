@@ -30,11 +30,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pipenv
+          curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+          pipenv shell
           pipenv install --dev --deploy
 
       - name: List dependencies
         run: |
+          pipenv shell
           pipenv lock -r
 
       - name: Run pytest

@@ -70,6 +70,7 @@ def test_optuna_sweep(tmp_path):
     ] + overrides
     run_sh_command(command)
 
+
 # TODO: add wandb secrets key to repo for logging
 # @RunIf(wandb=True, sh=True)
 # @pytest.mark.slow

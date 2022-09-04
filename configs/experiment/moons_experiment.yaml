@@ -14,8 +14,8 @@ defaults:
 task_name: "moons_experiment"
 tags:
   - moons
-  - ${task_name}  # dynamically interpolated to the task_name variable
-  - ${datamodule.train_dataset.n_samples}_base_samples  # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
+  - ${task_name} # dynamically interpolated to the task_name variable
+  - ${datamodule.train_dataset.n_samples}_base_samples # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
   - ${datamodule.data_aug.n_augmentations}_augmentations # dynamically interpolated to <NUM_OF_AUGMENTATIONS>_augmentations
   - ${datamodule.data_aug.noise}_noise # dynamically interpolated to <AUGMENTATION_NOISE>_noise
 
@@ -31,10 +31,5 @@ datamodule:
 
 logger:
   wandb:
-    tags: ${tags}  # tags defined above
+    tags: ${tags} # tags defined above
     project: "template-tests"
-
-
-
-
-

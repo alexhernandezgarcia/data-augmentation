@@ -1,8 +1,11 @@
 from typing import Tuple
+
 import numpy as np
 
 
-def augment_data(X: np.ndarray, Y: np.ndarray, noise: float = 0.05, n_augmentations: int = 1) -> Tuple[np.ndarray, np.ndarray]:
+def augment_data(
+    X: np.ndarray, Y: np.ndarray, noise: float = 0.05, n_augmentations: int = 1
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Augment data function takes in a SkLearn point dataset (moons, circles, blobs etc.) and creates a new dataset.
     The new dataset is a combination of the original dataset + the original dataset distorted by random Gaussian noise.

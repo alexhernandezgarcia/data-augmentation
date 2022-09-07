@@ -3,7 +3,7 @@
 # to execute this experiment run:
 # python train.py experiment=example
 defaults:
-  - override /datamodule: moons.yaml
+  - override /datamodule: moons_oracle.yaml
   - override /model: mlp.yaml
   - override /callbacks: default_with_wandb_callbacks.yaml
   - override /logger: wandb.yaml
@@ -15,9 +15,10 @@ task_name: "moons_experiment"
 tags:
   - moons
   - ${task_name}  # dynamically interpolated to the task_name variable
-  - ${datamodule.dataset.n_samples}_base_samples  # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
+  - ${datamodule.train_val_test_split[0]}_base_samples  # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
   - ${datamodule.data_aug.n_augmentations}_augmentations # dynamically interpolated to <NUM_OF_AUGMENTATIONS>_augmentations
-  - ${datamodule.data_aug.noise}_noise # dynamically interpolated to <AUGMENTATION_NOISE>_noise
+  - ${datamodule.data_aug.max_d}_oracle_budget # dynamically interpolated to <MAX_D>_oracle_budget
+  - ${datamodule.data_aug.lmd}_oracle_penalize_factor # dynamically interpolated to <LMD>_oracle_penalize_factor
 
 seed: 12345
 
@@ -25,15 +26,8 @@ trainer:
   min_epochs: 10
   max_epochs: 10
 
-datamodule:
-  train_val_test_split: [1_000, 1_000, 1_000]
 
 logger:
   wandb:
     tags: ${tags}  # tags defined above
     project: "template-tests"
-
-
-
-
-

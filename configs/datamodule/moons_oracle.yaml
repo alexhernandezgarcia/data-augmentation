@@ -11,8 +11,7 @@ dataset:
 # The effective training size becomes n_samples * (n_augmentations + 1)
 data_aug:
   _partial_: True
-  _target_: src.data_augmentations.gaussian.augment_data
-  noise: 0.05 # the noise added to the augmented samples
+  _target_: src.data_augmentations.oracle_augment.augment_data
+  max_d: 0.1 # the amount of Gaussian noise to add to each sample point in SKlearn data set
+  lmd: 0.05 # the amount of Gaussian noise used to penalize the oracle.
   n_augmentations: 0  # number of augmentation iteration.
-
-

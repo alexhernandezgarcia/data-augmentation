@@ -4,16 +4,19 @@ train_dataset:
   _target_: sklearn.datasets.make_moons
   n_samples: 20
   shuffle: True
+  noise: 0.0005 # add small amount of noise to randomize the data points
   random_state: 1234 # for reproducible output across multiple function calls
 
 val_dataset:
-  _target_: sklearn.datasets.make_moons  # use the same Sklearn data generation function being used in train_dataset
-  n_samples: 1000  # generate 1000 examples for validation
+  _target_: sklearn.datasets.make_moons # use the same Sklearn data generation function being used in train_dataset
+  n_samples: 1000 # generate 1000 examples for validation
+  noise: 0.0005 # add small amount of noise to randomize the data points
   random_state: 1111 # set static seed value for reproducible validation set
 
 test_dataset:
-  _target_: sklearn.datasets.make_moons  # use the same Sklearn data generation function being used in train_dataset
-  n_samples: 1000  # generate 1000 examples for test
+  _target_: sklearn.datasets.make_moons # use the same Sklearn data generation function being used in train_dataset
+  n_samples: 1000 # generate 1000 examples for test
+  noise: 0.0005 # add small amount of noise to randomize the data points
   random_state: 2222 # set static seed value for reproducible test set
 
 # The augmentation function to use.
@@ -22,6 +25,4 @@ data_aug:
   _partial_: True
   _target_: src.data_augmentations.gaussian.augment_data
   noise: 0.05 # the noise added to the augmented samples
-  n_augmentations: 0  # number of augmentation iteration.
-
-
+  n_augmentations: 0 # number of augmentation iteration.

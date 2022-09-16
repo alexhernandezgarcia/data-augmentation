@@ -544,7 +544,7 @@ class LogSklearnDatasetPlots(Callback):
 
         # plot and log validation data
         dataset = trainer.datamodule.val_dataloader().dataset
-        xlim, y_lim= self.plot_dataset(
+        x_lim, y_lim = self.plot_dataset(
             dataset_name="Validation",
             data_X=dataset.X,
             data_Y=dataset.Y,
@@ -555,7 +555,7 @@ class LogSklearnDatasetPlots(Callback):
         dataset = trainer.datamodule.train_dataloader().dataset
         self.plot_dataset(
             dataset_name="Train", data_X=dataset.X, data_Y=dataset.Y, experiment_logger=experiment,
-            x_lim=xlim,
+            x_lim=x_lim,
             y_lim=y_lim,
         )
 
@@ -566,7 +566,7 @@ class LogSklearnDatasetPlots(Callback):
             data_X=dataset.X,
             data_Y=dataset.Y,
             experiment_logger=experiment,
-            x_lim=xlim,
+            x_lim=x_lim,
             y_lim=y_lim,
         )
 
@@ -612,12 +612,12 @@ class LogSklearnDatasetPlots(Callback):
         plt.savefig(path / f"{dataset_name}_Dataset.png")
 
         experiment_logger.log({f"Charts/{dataset_name}_dataset": wandb.Image(plt)}, commit=False)
-        xlim, y_lim = plt.xlim(), plt.ylim()
+        x_lim, y_lim = plt.xlim(), plt.ylim()
 
         # close plots
         plt.close("all")
 
-        return xlim, y_lim
+        return x_lim, y_lim
 
 
 class AddToConfigEffectiveTrainSize(Callback):

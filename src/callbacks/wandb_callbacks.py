@@ -542,19 +542,19 @@ class LogSklearnDatasetPlots(Callback):
         logger = get_wandb_logger(trainer=trainer)
         experiment = logger.experiment
 
-        # plot and log training data
-        dataset = trainer.datamodule.train_dataloader().dataset
-        xlim, y_lim = self.plot_dataset(
-            dataset_name="Train", data_X=dataset.X, data_Y=dataset.Y, experiment_logger=experiment
-        )
-
         # plot and log validation data
         dataset = trainer.datamodule.val_dataloader().dataset
-        self.plot_dataset(
+        xlim, y_lim= self.plot_dataset(
             dataset_name="Validation",
             data_X=dataset.X,
             data_Y=dataset.Y,
-            experiment_logger=experiment,
+            experiment_logger=experiment
+        )
+
+        # plot and log training data
+        dataset = trainer.datamodule.train_dataloader().dataset
+        self.plot_dataset(
+            dataset_name="Train", data_X=dataset.X, data_Y=dataset.Y, experiment_logger=experiment,
             x_lim=xlim,
             y_lim=y_lim,
         )

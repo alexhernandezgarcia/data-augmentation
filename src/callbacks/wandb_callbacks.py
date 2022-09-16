@@ -354,7 +354,10 @@ class LogDecisionBoundary(Callback):
         """
         sn.set(style="darkgrid", font_scale=1.4)
 
-        xx, yy = np.mgrid[-1.5:2.5:0.01, -1.0:1.5:0.01]
+        x_start, x_end = np.min(X[:, 0]) - 0.5, np.max(X[:, 0]) + 0.5
+        y_start, y_end = np.min(X[:, 1]) - 0.5, np.max(X[:, 1]) + 0.5
+
+        xx, yy = np.mgrid[x_start:x_end:0.01, y_start:y_end:0.01]
         grid = np.c_[xx.ravel(), yy.ravel()]
         batch = torch.from_numpy(grid).type(torch.float32).to(device=model.device)
         with torch.no_grad():

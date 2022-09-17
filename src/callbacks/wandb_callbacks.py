@@ -551,13 +551,16 @@ class LogSklearnDatasetPlots(Callback):
             dataset_name="Validation",
             data_X=dataset.X,
             data_Y=dataset.Y,
-            experiment_logger=experiment
+            experiment_logger=experiment,
         )
 
         # plot and log training data
         dataset = trainer.datamodule.train_dataloader().dataset
         self.plot_dataset(
-            dataset_name="Train", data_X=dataset.X, data_Y=dataset.Y, experiment_logger=experiment,
+            dataset_name="Train",
+            data_X=dataset.X,
+            data_Y=dataset.Y,
+            experiment_logger=experiment,
             x_lim=x_lim,
             y_lim=y_lim,
         )

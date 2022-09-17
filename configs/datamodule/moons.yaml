@@ -13,6 +13,4 @@ data_aug:
   _partial_: True
   _target_: src.data_augmentations.gaussian.augment_data
   noise: 0.05 # the noise added to the augmented samples
-  n_augmentations: 0  # number of augmentation iteration.
-
-
+  n_augmentations: 0 # number of augmentation iteration.

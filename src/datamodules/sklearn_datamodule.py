@@ -2,8 +2,9 @@ from typing import Tuple, Callable, List
 import numpy as np
 from pl_bolts.datamodules import SklearnDataModule
 from pytorch_lightning import LightningDataModule
-from src.utils.pylogger import get_pylogger
 from sklearn.model_selection import train_test_split
+
+from src.utils.pylogger import get_pylogger
 
 log = get_pylogger(__name__)
 
@@ -32,7 +33,6 @@ def create_sklearn_datamodule(
 
     Returns:
         datamodule (LightningDataModule): a PytorchLightening Datamodule
-
     """
     X_data_bank, y_data_bank = dataset
 
@@ -93,7 +93,7 @@ def create_sklearn_datamodule(
     )
 
     # log info about the dataset.
-    log.info(f"SklearnDataModule stats: ")
+    log.info("SklearnDataModule stats:")
     log.info(f"\tNumber of Training examples: {len(datamodule.train_dataset)}")
     log.info(f"\tNumber of Validation examples: {len(datamodule.val_dataset)}")
     log.info(f"\tNumber of Testing examples: {len(datamodule.test_dataset)}")

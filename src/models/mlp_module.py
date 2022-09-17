@@ -1,12 +1,12 @@
+from collections import OrderedDict
 from typing import Any, List
 
-import torch
-import pytorch_lightning as pl
 import more_itertools as mit
-from collections import OrderedDict
+import pytorch_lightning as pl
+import torch
+from torchmetrics import F1Score, MaxMetric
 from torchmetrics.classification.accuracy import Accuracy
-from torchmetrics import F1Score
-from torchmetrics import MaxMetric
+
 from src.utils.pylogger import get_pylogger
 
 log = get_pylogger(__name__)
@@ -15,9 +15,8 @@ log = get_pylogger(__name__)
 # define a Multi-Layer Perceptron
 class MLPLitModule(pl.LightningModule):
     def __init__(self, layers: List[int], lr: float = 0.001) -> None:
-        """
-        Constructor for a multi-layer perceptron style network with ReLU activations in hidden layers and Stochastic
-        Gradient Descent (SGD) as the optimizer.
+        """Constructor for a multi-layer perceptron style network with ReLU activations in hidden
+        layers and Stochastic Gradient Descent (SGD) as the optimizer.
 
         Args:
             layers (List[int]): a list of integer values which define the depth and width of the feed-forward
@@ -40,10 +39,12 @@ class MLPLitModule(pl.LightningModule):
         layer_dict = OrderedDict()
         for i, dims in enumerate(input_output_dims):
             input_dims, output_dims = dims
-            layer_dict[f"linear_{i}"] = torch.nn.Linear(in_features=input_dims, out_features=output_dims)
+            layer_dict[f"linear_{i}"] = torch.nn.Linear(
+                in_features=input_dims, out_features=output_dims
+            )
 
             # don't add relu to final logits layer
-            if i != number_of_trainable_layers-1:
+            if i != number_of_trainable_layers - 1:
                 layer_dict[f"relu_{i}"] = torch.nn.ReLU()
 
         log.info(layer_dict)
@@ -152,7 +153,4 @@ class MLPLitModule(pl.LightningModule):
         See examples here:
             https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#configure-optimizers
         """
-        return torch.optim.SGD(
-            params=self.parameters(),
-            lr=self.hparams.lr
-        )
+        return torch.optim.SGD(params=self.parameters(), lr=self.hparams.lr)

@@ -59,11 +59,11 @@ python src/train.py experiment=moons_experiment.yaml datamodule.dataset.n_sample
 You can create multi-run of an experiment using Hydra multi-run direction (`-m` or `--multi-run`)
 
 ```bash
-# now Hydra with create 8 differnet experiment runs that will each have a different value for the n_samples parameter
+# now Hydra with create 8 different experiment runs that will each have a different value for the n_samples parameter
 python src/train.py -m experiment=moons_experiment.yaml datamodule.dataset.n_samples=20,50,100,250,500,1000,5000,10000
 ```
 
-This process can also be scripted (bash or python shell scripts) and saved in [scripts/](scripts/) directory for an example checkout [scripts/moons_run.sh](scripts/moons_run.sh) or [scripts/schedule.sh](scripts/schedule.sh) 
+This process can also be scripted (bash or python shell scripts) and saved in [scripts/](scripts/) directory for an example checkout [scripts/moons_run.sh](scripts/moons_run.sh) or [scripts/schedule.sh](scripts/schedule.sh)
 
 A WandB dashboard created using [scripts/moons_run.sh](scripts/moons_run.sh) can be seen at [Moons_Experiment_Dashboard](https://wandb.ai/rafay/moons_experiment)
 
@@ -120,8 +120,6 @@ The directory structure of new project looks like this:
 └── README.md
 ```
 
-
-
 ## Workflow
 
 **Basic workflow**
@@ -133,11 +131,12 @@ The directory structure of new project looks like this:
 3. Write your experiment config, containing paths to model and datamodule
 
 4. Run training with chosen experiment config:
+
    ```bash
    python src/train.py experiment=experiment_name.yaml
    ```
 
----
+______________________________________________________________________
 
 ## Logs
 
@@ -170,6 +169,6 @@ Default logging structure:
 
 You can change this structure by modifying paths in [hydra configuration](configs/hydra).
 
----
+______________________________________________________________________
 
-***This project is built upon the [lightning-hydra-template](https://github.com/ashleve/lightning-hydra-template). For a thorough explanation of all the concepts and practices please follow that repository.*** 
+***This project is built upon the [lightning-hydra-template](https://github.com/ashleve/lightning-hydra-template). For a thorough explanation of all the concepts and practices please follow that repository.***

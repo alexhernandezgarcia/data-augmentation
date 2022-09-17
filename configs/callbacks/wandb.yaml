@@ -1,8 +1,7 @@
 # create decision boundary
 decision_boundary:
   _target_: src.callbacks.wandb_callbacks.LogDecisionBoundary
-  dirpath: ${paths.output_dir}  # path where to store decision boundary plot default is under the experiment logs
-
+  dirpath: ${paths.output_dir} # path where to store decision boundary plot default is under the experiment logs
 
 watch_model:
   _target_: src.callbacks.wandb_callbacks.WatchModel
@@ -12,12 +11,11 @@ watch_model:
 
 LogWeightBiasDistribution:
   _target_: src.callbacks.wandb_callbacks.LogWeightBiasDistribution
-  dirpath: ${paths.output_dir}  # path where to store weight and bias distribution plots, default is under the experiment logs
-
+  dirpath: ${paths.output_dir} # path where to store weight and bias distribution plots, default is under the experiment logs
 
 LogSklearnDatasetPlots:
   _target_: src.callbacks.wandb_callbacks.LogSklearnDatasetPlots
-  dirpath: ${paths.output_dir}  # path where to store dataset plots, default is under the experiment logs
+  dirpath: ${paths.output_dir} # path where to store dataset plots, default is under the experiment logs
 
 AddToConfigEffectiveTrainSize:
   _target_: src.callbacks.wandb_callbacks.AddToConfigEffectiveTrainSize

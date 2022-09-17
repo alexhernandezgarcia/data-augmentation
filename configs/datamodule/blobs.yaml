@@ -1,0 +1,32 @@
+_target_: src.datamodules.sklearn_datamodule.create_sklearn_datamodule
+
+# train, val and test set are generated with the same seed value to make sure the same dataset is sampled each time
+train_dataset:
+  _target_: sklearn.datasets.make_blobs
+  n_samples: 20
+  n_features: 2
+  centers: 2
+  shuffle: True
+  random_state: 2222 # for reproducible output across multiple function calls
+
+val_dataset:
+  _target_: sklearn.datasets.make_blobs # use the same Sklearn data generation function being used in train_dataset
+  n_samples: 1000 # generate 1000 examples for validation
+  n_features: 2
+  centers: 2
+  random_state: 2222 # set static seed value for reproducible validation set
+
+test_dataset:
+  _target_: sklearn.datasets.make_blobs # use the same Sklearn data generation function being used in train_dataset
+  n_samples: 1000 # generate 1000 examples for test
+  n_features: 2
+  centers: 2
+  random_state: 2222 # set static seed value for reproducible test set
+
+# The augmentation function to use.
+# The effective training size becomes n_samples * (n_augmentations + 1)
+data_aug:
+  _partial_: True
+  _target_: src.data_augmentations.gaussian.augment_data
+  noise: 0.02 # the noise added to the augmented samples
+  n_augmentations: 0 # number of augmentation iteration.

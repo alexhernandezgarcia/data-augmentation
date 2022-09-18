@@ -3,7 +3,7 @@ import numpy as np
 
 
 def augment_data(
-    X: np.ndarray, Y: np.ndarray, X_oracle: np.ndarray, Y_oracle: np.ndarray, max_d: float = 0.1, lmd: float = 0.05, n_augmentations: int = 1
+    X: np.ndarray, Y: np.ndarray, X_oracle: np.ndarray, Y_oracle: np.ndarray, max_d: float = 0.1, lmd: float = 0.05, n_augmentations: int = 1, **kwargs
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Augment data function takes in a SkLearn point dataset (moons, circles, blobs etc.) and creates a new dataset.
@@ -18,6 +18,7 @@ def augment_data(
         lmd (float): Controls the amount of Gaussian noise used to penalize the oracle. Higher the lmd the more distorted the new points. Default 0.05
         n_augmentations (int): the number of time to run the original dataset through the augmentation process to create
                           new data. Default 1
+        **kwargs: keyword arguments for handling mismatched arguments across distinct augmentation functions
 
     Returns:
         new_X (np.ndarray): augmented dataset with is a combination of original dataset + new augmented dataset

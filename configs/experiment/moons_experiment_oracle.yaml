@@ -11,7 +11,7 @@ defaults:
 
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
-task_name: "moons_experiment"
+task_name: "moons_oracle_experiment"
 tags:
   - moons
   - ${task_name}  # dynamically interpolated to the task_name variable

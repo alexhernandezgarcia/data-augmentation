@@ -1,6 +1,6 @@
 _target_: src.datamodules.sklearn_datamodule.create_sklearn_datamodule_2
 train_val_test_split: [2_000, 1_000, 1_000]
-random_state: 1234  # to create random splits
+random_state: 1234 # to create random splits
 
 dataset:
   _target_: sklearn.datasets.make_moons

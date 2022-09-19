@@ -1,0 +1,33 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+defaults:
+  - override /datamodule: blobs_oracle.yaml
+  - override /model: mlp.yaml
+  - override /callbacks: default_with_wandb_callbacks.yaml
+  - override /logger: wandb.yaml
+  - override /trainer: default.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+task_name: "blobs_oracle_experiment"
+tags:
+  - blobs
+  - ${task_name}  # dynamically interpolated to the task_name variable
+  - ${datamodule.train_val_test_split[0]}_base_samples  # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
+  - ${datamodule.data_aug.n_augmentations}_augmentations # dynamically interpolated to <NUM_OF_AUGMENTATIONS>_augmentations
+  - ${datamodule.data_aug.max_d}_oracle_budget # dynamically interpolated to <MAX_D>_oracle_budget
+  - ${datamodule.data_aug.lmd}_oracle_penalize_factor # dynamically interpolated to <LMD>_oracle_penalize_factor
+
+seed: 12345
+
+trainer:
+  min_epochs: 10
+  max_epochs: 10
+
+
+logger:
+  wandb:
+    tags: ${tags}  # tags defined above
+    project: "template-tests"

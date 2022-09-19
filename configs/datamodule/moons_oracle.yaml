@@ -1,6 +1,6 @@
 _target_: src.datamodules.sklearn_datamodule.create_sklearn_datamodule_2
 train_val_test_split: [2_000, 1_000, 1_000]
-random_state: 1234  # to create random splits
+random_state: 1234 # to create random splits
 
 dataset:
   _target_: sklearn.datasets.make_moons
@@ -16,4 +16,4 @@ data_aug:
   _target_: src.data_augmentations.oracle_augment.augment_data
   max_d: 0.1 # the amount of Gaussian noise to add to each sample point in SKlearn data set
   lmd: 0.05 # the amount of Gaussian noise used to penalize the oracle.
-  n_augmentations: 0  # number of augmentation iteration.
+  n_augmentations: 0 # number of augmentation iteration.

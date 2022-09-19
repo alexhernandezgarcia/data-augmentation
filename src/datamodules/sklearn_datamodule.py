@@ -1,4 +1,5 @@
-from typing import Callable, Tuple, List
+from typing import Callable, List, Tuple
+
 import numpy as np
 from pl_bolts.datamodules import SklearnDataModule
 from pytorch_lightning import LightningDataModule
@@ -10,12 +11,12 @@ log = get_pylogger(__name__)
 
 
 def create_sklearn_datamodule(
-        train_dataset: Tuple[np.ndarray, np.ndarray],
-        val_dataset: Tuple[np.ndarray, np.ndarray],
-        test_dataset: Tuple[np.ndarray, np.ndarray],
-        data_aug: Callable = None,
-        *args: object,
-        **kwargs: object,
+    train_dataset: Tuple[np.ndarray, np.ndarray],
+    val_dataset: Tuple[np.ndarray, np.ndarray],
+    test_dataset: Tuple[np.ndarray, np.ndarray],
+    data_aug: Callable = None,
+    *args: object,
+    **kwargs: object,
 ) -> LightningDataModule:
     """Helper function to create a LightningDataModule for Sklearn datasets.
 
@@ -76,12 +77,12 @@ def create_sklearn_datamodule(
 
 
 def create_sklearn_datamodule_2(
-        dataset: Tuple[np.ndarray, np.ndarray],
-        data_aug: Callable = None,
-        train_val_test_split: List = None,
-        random_state: int = 1234,
-        *args: object,
-        **kwargs: object,
+    dataset: Tuple[np.ndarray, np.ndarray],
+    data_aug: Callable = None,
+    train_val_test_split: List = None,
+    random_state: int = 1234,
+    *args: object,
+    **kwargs: object,
 ) -> LightningDataModule:
     """
     _author_: Ruchit Rawal (https://github.com/JARVVVIS)
@@ -136,9 +137,7 @@ def create_sklearn_datamodule_2(
     y_val = np.reshape(y_val, (len(y_val), 1))
     y_test = np.reshape(y_test, (len(y_test), 1))
 
-    log.info(
-        f"Data remaining in Data-Bank after train-val-test splits: {len(y_data_bank)}"
-    )
+    log.info(f"Data remaining in Data-Bank after train-val-test splits: {len(y_data_bank)}")
     # augment data if a data_aug callable function is provided
     if data_aug:
         log.info(f"Data augmentation function provided {data_aug.__repr__()}")
@@ -166,7 +165,7 @@ def create_sklearn_datamodule_2(
     )
 
     # log info about the dataset.
-    log.info(f"SklearnDataModule stats: ")
+    log.info("SklearnDataModule stats: ")
     log.info(f"\tNumber of Training examples: {len(datamodule.train_dataset)}")
     log.info(f"\tNumber of Validation examples: {len(datamodule.val_dataset)}")
     log.info(f"\tNumber of Testing examples: {len(datamodule.test_dataset)}")

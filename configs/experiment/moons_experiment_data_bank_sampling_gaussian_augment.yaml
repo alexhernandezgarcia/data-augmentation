@@ -1,0 +1,31 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+defaults:
+  - override /datamodule: moons_data_bank_gaussian_augment.yaml
+  - override /model: mlp.yaml
+  - override /callbacks: default_with_wandb_callbacks.yaml
+  - override /logger: wandb.yaml
+  - override /trainer: default.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+task_name: "moons_experiment_data_bank_sampling_gaussian_augment"
+tags:
+  - moons
+  - ${task_name} # dynamically interpolated to the task_name variable
+  - ${datamodule.train_val_test_split[0]}_base_samples # dynamically interpolated to <NUM_OF_SAMPLES>_base_samples
+  - ${datamodule.data_aug.n_augmentations}_augmentations # dynamically interpolated to <NUM_OF_AUGMENTATIONS>_augmentations
+  - ${datamodule.data_aug.noise}_noise # dynamically interpolated to <AUGMENTATION_NOISE>_noise
+
+seed: 12345
+
+trainer:
+  min_epochs: 10
+  max_epochs: 10
+
+logger:
+  wandb:
+    tags: ${tags} # tags defined above
+    project: "template-tests"

@@ -331,9 +331,13 @@ class LogDecisionBoundary(Callback):
         val_data = trainer.datamodule.val_dataloader().dataset
         valX, valY = val_data.X, val_data.Y
 
+        ckpt_path = trainer.checkpoint_callback.best_model_path  # best model
+        log.info("Drawing decision boundary ...")
+        log.info(f"Using best checkpoint: {ckpt_path}")
+        model = pl_module.load_from_checkpoint(checkpoint_path=ckpt_path)
+
         pl_module.eval()  # put model in eval mode
-        self._show_separation(model=pl_module, experiment_logger=experiment, X=valX, y=valY)
-        pl_module.train()  # put model back to train mode
+        self._show_separation(model=model, experiment_logger=experiment, X=valX, y=valY)
 
     def _show_separation(
         self,

@@ -328,7 +328,7 @@ class LogDecisionBoundary(Callback):
         experiment = logger.experiment
 
         # get validation data
-        val_data = trainer.datamodule.val_dataloader().dataset
+        val_data = trainer.datamodule.test_dataloader().dataset
         valX, valY = val_data.X, val_data.Y
 
         ckpt_path = trainer.checkpoint_callback.best_model_path  # best model

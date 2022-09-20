@@ -662,6 +662,6 @@ class AddToConfigEffectiveTrainSize(Callback):
         experiment.config.update({"effective_training_size": len(valY)})
 
         # hack to add base samples to the config
-        if 'datamodule/train_val_test_split' in logger.experiment.config._items:
-            base_n_samples = logger.experiment.config._items['datamodule/train_val_test_split'][0]
-            experiment.config.update({'datamodule/train_dataset/n_samples': base_n_samples})
+        if "datamodule/train_val_test_split" in logger.experiment.config._items:
+            base_n_samples = logger.experiment.config._items["datamodule/train_val_test_split"][0]
+            experiment.config.update({"datamodule/train_dataset/n_samples": base_n_samples})

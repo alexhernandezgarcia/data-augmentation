@@ -449,8 +449,13 @@ class LogWeightBiasDistribution(Callback):
         logger = get_wandb_logger(trainer=trainer)
         experiment = logger.experiment
 
+        ckpt_path = trainer.checkpoint_callback.best_model_path  # best model
+        log.info("Drawing decision boundary ...")
+        log.info(f"Using best checkpoint: {ckpt_path}")
+        model = pl_module.load_from_checkpoint(checkpoint_path=ckpt_path)
+
         # get parameters and their names and send them to plot_distribution
-        for name, param in pl_module.named_parameters():
+        for name, param in model.named_parameters():
             # print(name, param)
             self.save_params_as_numpy(name, param.cpu().data.numpy(), stage="after")
             self.plot_distribution(

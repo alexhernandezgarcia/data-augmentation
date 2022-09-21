@@ -56,9 +56,9 @@ class MLPLitModule(pl.LightningModule):
 
         # use separate metric instance for train, val and test step
         # to ensure a proper reduction over the epoch
-        self.train_acc = Accuracy()
-        self.val_acc = Accuracy()
-        self.test_acc = Accuracy()
+        self.train_acc = Accuracy(multiclass=False)
+        self.val_acc = Accuracy(multiclass=False)
+        self.test_acc = Accuracy(multiclass=False)
 
         self.train_f1 = F1Score(multiclass=False)
         self.val_f1 = F1Score(multiclass=False)
@@ -82,16 +82,15 @@ class MLPLitModule(pl.LightningModule):
         # https://stackoverflow.com/questions/70216222/pytorch-is-throwing-an-error-runtimeerror-result-type-float-cant-be-cast-to-th
         loss = self.criterion(logits, y.float())
         probs = torch.sigmoid(logits)
-        preds = probs > 0.5
-        return loss, preds, y
+        return loss, probs, y
 
     def training_step(self, batch: Any, batch_idx: int):
         # training_step defines one step of the training loop
-        loss, preds, targets = self.step(batch)
+        loss, probs, targets = self.step(batch)
 
         # log train metrics
-        acc = self.train_acc(preds, targets)
-        f1 = self.train_f1(preds, targets)
+        acc = self.train_acc(probs, targets)
+        f1 = self.train_f1(probs, targets)
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         self.log("train/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
         self.log("train/f1", f1, on_step=False, on_epoch=True, prog_bar=True)
@@ -99,52 +98,50 @@ class MLPLitModule(pl.LightningModule):
         # we can return here dict with any tensors
         # and then read it in some callback or in `training_epoch_end()` below
         # remember to always return loss from `training_step()` or else backpropagation will fail!
-        return {"loss": loss, "preds": preds, "targets": targets}
+        return {"loss": loss, "probs": probs, "targets": targets}
 
     def training_epoch_end(self, outputs: List[Any]):
         # `outputs` is a list of dicts returned from `training_step()`
-        pass
+        self.train_acc.reset()
+        self.train_f1.reset()
 
     def validation_step(self, batch: Any, batch_idx: int):
-        loss, preds, targets = self.step(batch)
+        loss, probs, targets = self.step(batch)
 
+        # PL with convert probs to binary by using the >= 0.5 threshold
         # log val metrics
-        acc = self.val_acc(preds, targets)
-        f1 = self.val_f1(preds, targets)
+        acc = self.val_acc(probs, targets)
+        f1 = self.val_f1(probs, targets)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         self.log("val/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
         self.log("val/f1", f1, on_step=False, on_epoch=True, prog_bar=True)
 
-        return {"loss": loss, "preds": preds, "targets": targets}
+        return {"loss": loss, "probs": probs, "targets": targets}
 
     def validation_epoch_end(self, outputs: List[Any]):
         acc = self.val_acc.compute()  # get val accuracy from current epoch
         self.val_acc_best.update(acc)
         self.log("val/acc_best", self.val_acc_best.compute(), on_epoch=True, prog_bar=True)
+        # reset metrics at the end of every val epoch
+        self.val_acc.reset()
+        self.val_f1.reset()
 
     def test_step(self, batch: Any, batch_idx: int):
-        loss, preds, targets = self.step(batch)
+        loss, probs, targets = self.step(batch)
 
+        # PL with convert probs to binary by using the >= 0.5 threshold
         # log test metrics
-        acc = self.test_acc(preds, targets)
-        f1 = self.test_f1(preds, targets)
+        acc = self.test_acc(probs, targets)
+        f1 = self.test_f1(probs, targets)
         self.log("test/loss", loss, on_step=False, on_epoch=True)
         self.log("test/acc", acc, on_step=False, on_epoch=True)
         self.log("test/f1", f1, on_step=False, on_epoch=True)
-        return {"loss": loss, "preds": preds, "targets": targets}
+        return {"loss": loss, "probs": probs, "targets": targets}
 
     def test_epoch_end(self, outputs: List[Any]):
-        pass
-
-    def on_epoch_end(self):
-        # reset metrics at the end of every epoch
-        self.train_acc.reset()
+        # reset metrics at the end of every test epoch
         self.test_acc.reset()
-        self.val_acc.reset()
-
-        self.train_f1.reset()
         self.test_f1.reset()
-        self.val_f1.reset()
 
     def configure_optimizers(self):
         """Choose what optimizers and learning-rate schedulers to use in your optimization.

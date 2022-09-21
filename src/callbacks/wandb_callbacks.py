@@ -328,12 +328,16 @@ class LogDecisionBoundary(Callback):
         experiment = logger.experiment
 
         # get validation data
-        val_data = trainer.datamodule.val_dataloader().dataset
+        val_data = trainer.datamodule.test_dataloader().dataset
         valX, valY = val_data.X, val_data.Y
 
+        ckpt_path = trainer.checkpoint_callback.best_model_path  # best model
+        log.info("Drawing decision boundary ...")
+        log.info(f"Using best checkpoint: {ckpt_path}")
+        model = pl_module.load_from_checkpoint(checkpoint_path=ckpt_path)
+
         pl_module.eval()  # put model in eval mode
-        self._show_separation(model=pl_module, experiment_logger=experiment, X=valX, y=valY)
-        pl_module.train()  # put model back to train mode
+        self._show_separation(model=model, experiment_logger=experiment, X=valX, y=valY)
 
     def _show_separation(
         self,
@@ -445,8 +449,13 @@ class LogWeightBiasDistribution(Callback):
         logger = get_wandb_logger(trainer=trainer)
         experiment = logger.experiment
 
+        ckpt_path = trainer.checkpoint_callback.best_model_path  # best model
+        log.info("Drawing decision boundary ...")
+        log.info(f"Using best checkpoint: {ckpt_path}")
+        model = pl_module.load_from_checkpoint(checkpoint_path=ckpt_path)
+
         # get parameters and their names and send them to plot_distribution
-        for name, param in pl_module.named_parameters():
+        for name, param in model.named_parameters():
             # print(name, param)
             self.save_params_as_numpy(name, param.cpu().data.numpy(), stage="after")
             self.plot_distribution(
@@ -651,3 +660,8 @@ class AddToConfigEffectiveTrainSize(Callback):
         valX, valY = train_data.X, train_data.Y
 
         experiment.config.update({"effective_training_size": len(valY)})
+
+        # hack to add base samples to the config
+        if "datamodule/train_val_test_split" in logger.experiment.config._items:
+            base_n_samples = logger.experiment.config._items["datamodule/train_val_test_split"][0]
+            experiment.config.update({"datamodule/train_dataset/n_samples": base_n_samples})

@@ -337,8 +337,12 @@ class LogDecisionBoundary(Callback):
         model = pl_module.load_from_checkpoint(checkpoint_path=ckpt_path)
 
         pl_module.eval()  # put model in eval mode
-        self._show_separation(model=model, experiment_logger=experiment, X=valX, y=valY, solid=False)
-        self._show_separation(model=model, experiment_logger=experiment, X=valX, y=valY, solid=True)
+        self._show_separation(
+            model=model, experiment_logger=experiment, X=valX, y=valY, solid=False
+        )
+        self._show_separation(
+            model=model, experiment_logger=experiment, X=valX, y=valY, solid=True
+        )
 
     def _show_separation(
         self,
@@ -347,7 +351,7 @@ class LogDecisionBoundary(Callback):
         X: np.ndarray,
         y: np.ndarray,
         save: bool = True,
-        solid: bool = False
+        solid: bool = False,
     ):
         """Plots and logs decision boundary for a model and dataset (X, y)
 
@@ -400,7 +404,8 @@ class LogDecisionBoundary(Callback):
             plt.savefig(self.dirpath + f"/decision_boundary{solid_tag}.png")
 
         experiment_logger.log(
-            {f"decision_boundary/{experiment_logger.name}{solid_tag}": wandb.Image(plt)}, commit=False
+            {f"decision_boundary/{experiment_logger.name}{solid_tag}": wandb.Image(plt)},
+            commit=False,
         )
         # close plot
         plt.close("all")

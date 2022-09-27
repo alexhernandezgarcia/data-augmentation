@@ -6,8 +6,9 @@ import numpy as np
 def augment_data(
     X: np.ndarray,
     Y: np.ndarray,
-    X_oracle: np.ndarray,
-    Y_oracle: np.ndarray,
+    X_oracle: np.ndarray = None,
+    Y_oracle: np.ndarray = None,
+    oracle_dataset: np.ndarray = None,
     max_d: float = 0.1,
     lmd: float = 0.05,
     n_augmentations: int = 1,
@@ -22,6 +23,7 @@ def augment_data(
         Y (np.ndarray): a numpy array with integer values denoting class labels for all data points in X
         X_oracle (np.ndarray): a dense dataset sampled from the same distribution as X.
         Y_oracle (np.ndarray): a numpy array with integer values denoting class labels for all data points in X_oracle
+        oracle_dataset:  X_oracle and Y_oracle combined into a tuple, for instantiation though hydra config
         max_d (float): Controls the amount of Gaussian noise to add to each sample point in SKlearn data set.
         lmd (float): Controls the amount of Gaussian noise used to penalize the oracle. Higher the lmd the more distorted the new points. Default 0.05
         n_augmentations (int): the number of time to run the original dataset through the augmentation process to create
@@ -33,6 +35,11 @@ def augment_data(
         new_Y (np.ndarray): array of class labels for each sample point in new_X
 
     """
+
+    if oracle_dataset is not None and X_oracle is not None and X_oracle is not None:
+        raise AttributeError("Provide either X_oracle, Y_oracle or oracle_dataset, not both")
+    if oracle_dataset is not None and X_oracle is None and X_oracle is None:
+        X_oracle, Y_oracle = oracle_dataset
 
     new_X, new_Y = X.copy(), Y.copy()
     for X_sample, Y_sample in zip(X, Y):

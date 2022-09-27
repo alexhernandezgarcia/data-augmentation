@@ -337,7 +337,12 @@ class LogDecisionBoundary(Callback):
         model = pl_module.load_from_checkpoint(checkpoint_path=ckpt_path)
 
         pl_module.eval()  # put model in eval mode
-        self._show_separation(model=model, experiment_logger=experiment, X=valX, y=valY)
+        self._show_separation(
+            model=model, experiment_logger=experiment, X=valX, y=valY, solid=False
+        )
+        self._show_separation(
+            model=model, experiment_logger=experiment, X=valX, y=valY, solid=True
+        )
 
     def _show_separation(
         self,
@@ -346,6 +351,7 @@ class LogDecisionBoundary(Callback):
         X: np.ndarray,
         y: np.ndarray,
         save: bool = True,
+        solid: bool = False,
     ):
         """Plots and logs decision boundary for a model and dataset (X, y)
 
@@ -368,9 +374,14 @@ class LogDecisionBoundary(Callback):
             probs = torch.sigmoid(model(batch).reshape(xx.shape)).cpu()
             probs = probs.numpy().reshape(xx.shape)
 
+        solid_tag = ""
+        if solid:
+            probs = probs >= 0.5
+            solid_tag = "_solid"
+
         f, ax = plt.subplots(figsize=(16, 10))
 
-        ax.set_title("Decision boundary", fontsize=14)
+        ax.set_title(f"Decision boundary {solid_tag}", fontsize=14)
         contour = ax.contourf(xx, yy, probs, 25, cmap="RdBu", vmin=0, vmax=1)
         #     ax_c = f.colorbar(contour)
         #     ax_c.set_label("$P(y = 1)$")
@@ -390,10 +401,11 @@ class LogDecisionBoundary(Callback):
 
         ax.set(xlabel="$X_1$", ylabel="$X_2$")
         if save:
-            plt.savefig(self.dirpath + "/decision_boundary.png")
+            plt.savefig(self.dirpath + f"/decision_boundary{solid_tag}.png")
 
         experiment_logger.log(
-            {f"decision_boundary/{experiment_logger.name}": wandb.Image(plt)}, commit=False
+            {f"decision_boundary/{experiment_logger.name}{solid_tag}": wandb.Image(plt)},
+            commit=False,
         )
         # close plot
         plt.close("all")

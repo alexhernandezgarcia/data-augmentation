@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 from typing import List
-
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.figure_factory as ff
@@ -338,11 +338,27 @@ class LogDecisionBoundary(Callback):
 
         pl_module.eval()  # put model in eval mode
         self._show_separation(
-            model=model, experiment_logger=experiment, X=valX, y=valY, solid=False
+            model=model, experiment_logger=experiment, X=valX, y=valY, solid=False, multiclass=pl_module.multiclass
         )
         self._show_separation(
-            model=model, experiment_logger=experiment, X=valX, y=valY, solid=True
+            model=model, experiment_logger=experiment, X=valX, y=valY, solid=True, multiclass=pl_module.multiclass
         )
+
+    @staticmethod
+    def _get_color2(label, prob):
+        rows, cols = label.shape
+        norm = plt.Normalize(0.0, 1.0, clip=False)
+        flat_label = label.ravel()
+        flat_prob = norm(prob.ravel())
+        probcolormap = np.array([mpl.colormaps['Reds'], mpl.colormaps['Blues'],
+                                 mpl.colormaps['Oranges'], mpl.colormaps['Greens'],
+                                 mpl.colormaps['Purples'], mpl.colormaps['Greys']])
+        output = np.empty((flat_label.shape[0], 4), dtype='uint8')
+
+        for i in range(len(flat_label)):
+            output[i] = list(probcolormap[flat_label[i]](flat_prob[i], bytes=True))
+
+        return output.reshape((rows, cols, -1))
 
     def _show_separation(
         self,
@@ -352,6 +368,7 @@ class LogDecisionBoundary(Callback):
         y: np.ndarray,
         save: bool = True,
         solid: bool = False,
+        multiclass: bool = False
     ):
         """Plots and logs decision boundary for a model and dataset (X, y)
 
@@ -371,33 +388,79 @@ class LogDecisionBoundary(Callback):
         grid = np.c_[xx.ravel(), yy.ravel()]
         batch = torch.from_numpy(grid).type(torch.float32).to(device=model.device)
         with torch.no_grad():
-            probs = torch.sigmoid(model(batch).reshape(xx.shape)).cpu()
-            probs = probs.numpy().reshape(xx.shape)
+            if not multiclass:
+                probs = torch.sigmoid(model(batch).reshape(xx.shape)).cpu()
+                probs = probs.numpy().reshape(xx.shape)
+            else:
+                logits = model(batch)
+                logits = logits.reshape((xx.shape[0], xx.shape[1], int(np.max(y)+1)))
+                probs = torch.softmax(logits, dim=-1).cpu()
+                # probs = torch.softmax(model(batch).reshape(xx.shape), dim=-1).cpu()
+                probs = probs.numpy() #.reshape(xx.shape)
 
         solid_tag = ""
-        if solid:
+        if solid and not multiclass:
             probs = probs >= 0.5
             solid_tag = "_solid"
+
+        elif solid and multiclass:
+            # VERY HACKY!!!
+            # add +1 so that all values are > 0, thus resultant color is dark!
+            y_hat = np.argmax(probs, axis=-1)
+            probs = y_hat + 1
+            solid_tag = "_solid"
+
+        elif not solid and multiclass:
+            y_hat = np.argmax(probs, axis=-1)
+            probs = np.max(probs, axis=-1)
 
         f, ax = plt.subplots(figsize=(16, 10))
 
         ax.set_title(f"Decision boundary {solid_tag}", fontsize=14)
-        contour = ax.contourf(xx, yy, probs, 25, cmap="RdBu", vmin=0, vmax=1)
+
+        if not multiclass:
+            cmap = "RdBu"
+            contour = ax.contourf(xx, yy, probs, 25, cmap=cmap, vmin=0, vmax=1)
+        else:
+            # first get the colors
+            pix_colors = self._get_color2(label=y_hat, prob=probs)
+            # https: // stackoverflow.com / a / 49834186 / 4699994
+            # very important!!! mgrid and meshgrid end up with different results need to transpose.
+            ax.imshow(np.transpose(pix_colors, [1, 0, 2]), extent=(x_start, x_end, y_start, y_end), alpha=0.8, origin='lower')
+
         #     ax_c = f.colorbar(contour)
         #     ax_c.set_label("$P(y = 1)$")
         #     ax_c.set_ticks([0, .25, .5, .75, 1])
 
-        ax.scatter(
-            X[:, 0],
-            X[:, 1],
-            c=y,
-            s=50,
-            cmap="RdBu",
-            vmin=-0.2,
-            vmax=1.2,
-            edgecolor="white",
-            linewidth=1,
-        )
+        if multiclass:
+            # establish colors and colormap
+            #  * color blind colors, from https://bit.ly/3qJ6LYL
+            redish = '#d73027'
+            orangeish = '#fc8d59'
+            greenish = '#33ff33'
+            blueish = '#4575b4'
+            purpleish = '#b266ff'
+            greyish = '#7F8C8D'
+            colormap = np.array([redish, blueish, orangeish, greenish, purpleish, greyish])
+            ax.scatter(
+                X[:, 0],
+                X[:, 1],
+                c=colormap[(y.flatten().astype('int'))],
+                s=50,
+                edgecolor='white',
+                linewidth=1,
+            )
+
+        else:
+            ax.scatter(
+                X[:, 0],
+                X[:, 1],
+                c=y,
+                s=50,
+                cmap=cmap,
+                edgecolor="white",
+                linewidth=1,
+            )
 
         ax.set(xlabel="$X_1$", ylabel="$X_2$")
         if save:
@@ -573,6 +636,7 @@ class LogSklearnDatasetPlots(Callback):
             data_X=dataset.X,
             data_Y=dataset.Y,
             experiment_logger=experiment,
+            multiclass=pl_module.multiclass
         )
 
         # plot and log training data
@@ -584,6 +648,7 @@ class LogSklearnDatasetPlots(Callback):
             experiment_logger=experiment,
             x_lim=x_lim,
             y_lim=y_lim,
+            multiclass=pl_module.multiclass
         )
 
         # plot and log test data
@@ -595,6 +660,7 @@ class LogSklearnDatasetPlots(Callback):
             experiment_logger=experiment,
             x_lim=x_lim,
             y_lim=y_lim,
+            multiclass=pl_module.multiclass
         )
 
     def plot_dataset(
@@ -605,6 +671,7 @@ class LogSklearnDatasetPlots(Callback):
         experiment_logger: WandbLogger.experiment,
         x_lim: tuple = None,
         y_lim: tuple = None,
+        multiclass = False
     ) -> tuple[tuple, tuple]:
         """
         Plots the scatter plot of a Sklearn dataset and logs to wandb as an image
@@ -626,8 +693,23 @@ class LogSklearnDatasetPlots(Callback):
         plt.figure(figsize=(16, 10))
         # set font size
         plt.title(f"{dataset_name} Dataset ({len(data_X)} Samples)")
-        colors = np.array(["red", "green"])
-        plt.scatter(data_X[:, 0], data_X[:, 1], color=list(colors[data_Y.flatten()]))
+
+        if not multiclass:
+            colors = np.array(["red", "green"])
+            plt.scatter(data_X[:, 0], data_X[:, 1], color=list(colors[data_Y.flatten()]))
+        else:
+            # establish colors and colormap
+            #  * color blind colors, from https://bit.ly/3qJ6LYL
+            redish = '#d73027'
+            orangeish = '#fc8d59'
+            greenish = '#33ff33'
+            blueish = '#4575b4'
+            purpleish = '#b266ff'
+            greyish = '#7F8C8D'
+            colormap = np.array([redish, blueish, orangeish, greenish, purpleish, greyish])
+            plt.scatter(data_X[:, 0], data_X[:, 1], color=colormap[(data_Y.flatten().astype('int'))])
+
+
         if x_lim and y_lim:
             plt.xlim(x_lim)
             plt.ylim(y_lim)

@@ -1,0 +1,43 @@
+_target_: src.datamodules.sklearn_datamodule.create_sklearn_datamodule
+
+train_dataset:
+  _target_: src.datamodules.components.make_pinwheel.make_pinwheel
+  n_samples: 30 # 30 samples per class
+  n_features: 2
+  n_classes: 3
+  noise: 0.0
+  shuffle: True
+  random_state: 1234 # for reproducible output across multiple function calls
+
+val_dataset:
+  _target_: src.datamodules.components.make_pinwheel.make_pinwheel
+  n_samples: 150 # generate 150 examples per class for validation
+  n_features: 2
+  n_classes: 3
+  noise: 0.0
+  shuffle: False
+  random_state: 1234 # set static seed value for reproducible validation set
+
+test_dataset:
+  _target_: src.datamodules.components.make_pinwheel.make_pinwheel
+  n_samples: 150 # generate 150 examples per class for test
+  n_features: 2
+  n_classes: 3
+  noise: 0.0
+  shuffle: False
+  random_state: 1234 # set static seed value for reproducible test set
+
+# The augmentation function to use.
+# The effective training size becomes n_samples * (n_augmentations + 1)
+data_aug:
+  _partial_: True
+  _target_: src.data_augmentations.oracle_augment.augment_data
+  oracle_dataset:
+    _target_: src.datamodules.components.make_pinwheel.make_pinwheel # use the same Sklearn data generation function being used in train_dataset
+    n_samples: 300 # generate 300 examples per class for test
+    n_features: 2
+    n_classes: 3
+    random_state: 1234 # set static seed value for reproducible test set
+  max_d: 0.1 # the amount of Gaussian noise to add to each sample point in SKlearn data set
+  lmd: 0.05 # the amount of Gaussian noise used to penalize the oracle.
+  n_augmentations: 0 # number of augmentation iteration.

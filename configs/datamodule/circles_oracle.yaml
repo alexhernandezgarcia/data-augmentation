@@ -1,0 +1,19 @@
+_target_: src.datamodules.sklearn_datamodule.create_sklearn_datamodule_2
+train_val_test_split: [2_000, 1_000, 1_000]
+random_state: 1234 # to create random splits
+
+dataset:
+  _target_: sklearn.datasets.make_circles
+  n_samples: 10_000
+  shuffle: True
+  noise: 0.0005 # add small amount of noise to randomize the data points
+  random_state: 1234
+
+# The augmentation function to use.
+# The effective training size becomes n_samples * (n_augmentations + 1)
+data_aug:
+  _partial_: True
+  _target_: src.data_augmentations.oracle_augment.augment_data
+  max_d: 0.1 # the amount of Gaussian noise to add to each sample point in SKlearn data set
+  lmd: 0.02 # the amount of Gaussian noise used to penalize the oracle.
+  n_augmentations: 0 # number of augmentation iteration.

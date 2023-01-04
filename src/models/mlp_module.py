@@ -14,7 +14,7 @@ log = get_pylogger(__name__)
 
 # define a Multi-Layer Perceptron
 class MLPLitModule(pl.LightningModule):
-    def __init__(self, layers: List[int], lr: float = 0.001) -> None:
+    def __init__(self, layers: List[int], lr: float = 0.001, multiclass=False) -> None:
         """Constructor for a multi-layer perceptron style network with ReLU activations in hidden
         layers and Stochastic Gradient Descent (SGD) as the optimizer.
 
@@ -51,18 +51,24 @@ class MLPLitModule(pl.LightningModule):
 
         self.net = torch.nn.Sequential(layer_dict)
 
+        # save the hyper-param is multi-class for later use
+        self.multiclass = multiclass
+        print(f"IS MULICLASS: {self.multiclass}")
         # loss function
-        self.criterion = torch.nn.BCEWithLogitsLoss()
+        if not self.multiclass:
+            self.criterion = torch.nn.BCEWithLogitsLoss()
+        else:
+            self.criterion = torch.nn.CrossEntropyLoss()
 
         # use separate metric instance for train, val and test step
         # to ensure a proper reduction over the epoch
-        self.train_acc = Accuracy(multiclass=False)
-        self.val_acc = Accuracy(multiclass=False)
-        self.test_acc = Accuracy(multiclass=False)
+        self.train_acc = Accuracy(multiclass=self.multiclass)
+        self.val_acc = Accuracy(multiclass=self.multiclass)
+        self.test_acc = Accuracy(multiclass=self.multiclass)
 
-        self.train_f1 = F1Score(multiclass=False)
-        self.val_f1 = F1Score(multiclass=False)
-        self.test_f1 = F1Score(multiclass=False)
+        self.train_f1 = F1Score(multiclass=self.multiclass)
+        self.val_f1 = F1Score(multiclass=self.multiclass)
+        self.test_f1 = F1Score(multiclass=self.multiclass)
 
         # for logging best so far validation accuracy
         self.val_acc_best = MaxMetric()
@@ -78,10 +84,17 @@ class MLPLitModule(pl.LightningModule):
     def step(self, batch: Any):
         x, y = batch
         logits = self.forward(x)
-        # y is int64, BCE requires float
-        # https://stackoverflow.com/questions/70216222/pytorch-is-throwing-an-error-runtimeerror-result-type-float-cant-be-cast-to-th
-        loss = self.criterion(logits, y.float())
-        probs = torch.sigmoid(logits)
+
+        if not self.multiclass:
+            # y is int64, BCE requires float
+            # https://stackoverflow.com/questions/70216222/pytorch-is-throwing-an-error-runtimeerror-result-type-float-cant-be-cast-to-th
+            loss = self.criterion(logits, y.float())
+            probs = torch.sigmoid(logits)
+        else:
+            y = torch.squeeze(y).to(torch.long)
+            loss = self.criterion(logits, y)
+            probs = logits.softmax(dim=-1)
+
         return loss, probs, y
 
     def training_step(self, batch: Any, batch_idx: int):

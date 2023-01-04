@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import Callable, List, Tuple
 
 import numpy as np
@@ -14,7 +15,7 @@ def create_sklearn_datamodule(
     train_dataset: Tuple[np.ndarray, np.ndarray],
     val_dataset: Tuple[np.ndarray, np.ndarray],
     test_dataset: Tuple[np.ndarray, np.ndarray],
-    data_aug: Callable = None,
+    data_aug: Callable | List[Callable] = None,
     *args: object,
     **kwargs: object,
 ) -> LightningDataModule:
@@ -29,7 +30,7 @@ def create_sklearn_datamodule(
         test_dataset (Tuple[np.ndarray, np.ndarray]): a fixed Sklearn dataset to be used as test dataset,
                                                       can be initialized through hydra
         data_aug (Callable): a callable function/class/object that takes in the X (sample points) and Y (labels) and
-                             return augmented dataset new_X and new_Y
+                             returns augmented dataset new_X and new_Y
         *args: arguments for SklearnDataModule (see comment above for full list of args)
         **kwargs: keyword arguments for SklearnDataModule (see comment above for full list of kwargs)
 
@@ -56,7 +57,14 @@ def create_sklearn_datamodule(
             f"Total dataset size before augmentation: {len(y_train) + len(y_val) + len(y_test)}"
         )
         log.info(f"Training set size before augmentation: {len(y_train)}")
-        X_train, y_train = data_aug(X_train, y_train)
+
+        if isinstance(data_aug, Iterable):
+            for aug_function in data_aug:
+                log.info(f"Data augmentation function provided {aug_function.__repr__()}")
+                X_train, y_train = aug_function(X_train, y_train, **kwargs)
+        else:
+            X_train, y_train = data_aug(X_train, y_train,**kwargs )
+
         log.info(f"Training set size after augmentation: {len(y_train)}")
         log.info(
             f"Total dataset size after augmentation: {len(y_train) + len(y_val) + len(y_test)}"

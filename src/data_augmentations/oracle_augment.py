@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Tuple, Callable
 
 import numpy as np
 
@@ -12,6 +12,7 @@ def augment_data(
     max_d: float = 0.1,
     lmd: float = 0.05,
     n_augmentations: int = 1,
+    oracle_func: Callable = None,
     **kwargs
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -28,6 +29,7 @@ def augment_data(
         lmd (float): Controls the amount of Gaussian noise used to penalize the oracle. Higher the lmd the more distorted the new points. Default 0.05
         n_augmentations (int): the number of time to run the original dataset through the augmentation process to create
                           new data. Default 1
+        oracle_func (Callable): optional function to change the oracle dataset
         **kwargs: keyword arguments for handling mismatched arguments across distinct augmentation functions
 
     Returns:
@@ -40,6 +42,15 @@ def augment_data(
         raise AttributeError("Provide either X_oracle, Y_oracle or oracle_dataset, not both")
     if oracle_dataset is not None and X_oracle is None and X_oracle is None:
         X_oracle, Y_oracle = oracle_dataset
+
+    if oracle_func:
+        oracle_data_len = len(X_oracle)
+        Y_oracle = Y_oracle.reshape((oracle_data_len,1))
+        X_oracle, Y_oracle = oracle_func(X_oracle, Y_oracle)
+        # remove original oracle data from the start
+        X_oracle, Y_oracle = X_oracle[oracle_data_len:], Y_oracle[oracle_data_len:]
+        Y_oracle = np.squeeze(Y_oracle)
+
 
     new_X, new_Y = X.copy(), Y.copy()
     for X_sample, Y_sample in zip(X, Y):

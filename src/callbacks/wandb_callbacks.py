@@ -45,7 +45,7 @@ class WatchModel(Callback):
     """Make wandb watch model at the beginning of the run."""
 
     def __init__(self, log: str = "gradients", log_freq: int = 100, log_graph=True):
-        self.log = log
+        self.logging_type = log
         self.log_freq = log_freq
         self.log_graph = log_graph
 
@@ -53,7 +53,10 @@ class WatchModel(Callback):
     def on_train_start(self, trainer, pl_module):
         logger = get_wandb_logger(trainer=trainer)
         logger.watch(
-            model=trainer.model, log=self.log, log_freq=self.log_freq, log_graph=self.log_graph
+            model=trainer.model,
+            log=self.logging_type,
+            log_freq=self.log_freq,
+            log_graph=self.log_graph,
         )
 
 

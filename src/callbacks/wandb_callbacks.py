@@ -330,6 +330,9 @@ class LogDecisionBoundary(Callback):
         logger = get_wandb_logger(trainer=trainer)
         experiment = logger.experiment
 
+        # is the dataset multiclass?
+        multiclass = True if pl_module.task == "multiclass" else False
+
         # get validation data
         val_data = trainer.datamodule.test_dataloader().dataset
         valX, valY = val_data.X, val_data.Y
@@ -341,10 +344,20 @@ class LogDecisionBoundary(Callback):
 
         pl_module.eval()  # put model in eval mode
         self._show_separation(
-            model=model, experiment_logger=experiment, X=valX, y=valY, solid=False, multiclass=pl_module.multiclass
+            model=model,
+            experiment_logger=experiment,
+            X=valX,
+            y=valY,
+            solid=False,
+            multiclass=multiclass,
         )
         self._show_separation(
-            model=model, experiment_logger=experiment, X=valX, y=valY, solid=True, multiclass=pl_module.multiclass
+            model=model,
+            experiment_logger=experiment,
+            X=valX,
+            y=valY,
+            solid=True,
+            multiclass=multiclass,
         )
 
     @staticmethod
@@ -632,6 +645,9 @@ class LogSklearnDatasetPlots(Callback):
         logger = get_wandb_logger(trainer=trainer)
         experiment = logger.experiment
 
+        # is the dataset multiclass?
+        multiclass = True if pl_module.task == "multiclass" else False
+
         # plot and log validation data
         dataset = trainer.datamodule.val_dataloader().dataset
         x_lim, y_lim = self.plot_dataset(
@@ -639,7 +655,7 @@ class LogSklearnDatasetPlots(Callback):
             data_X=dataset.X,
             data_Y=dataset.Y,
             experiment_logger=experiment,
-            multiclass=pl_module.multiclass
+            multiclass=multiclass,
         )
 
         # plot and log training data
@@ -651,7 +667,7 @@ class LogSklearnDatasetPlots(Callback):
             experiment_logger=experiment,
             x_lim=x_lim,
             y_lim=y_lim,
-            multiclass=pl_module.multiclass
+            multiclass=multiclass,
         )
 
         # plot and log test data
@@ -663,7 +679,7 @@ class LogSklearnDatasetPlots(Callback):
             experiment_logger=experiment,
             x_lim=x_lim,
             y_lim=y_lim,
-            multiclass=pl_module.multiclass
+            multiclass=multiclass,
         )
 
     def plot_dataset(
@@ -674,7 +690,7 @@ class LogSklearnDatasetPlots(Callback):
         experiment_logger: WandbLogger.experiment,
         x_lim: tuple = None,
         y_lim: tuple = None,
-        multiclass = False
+        multiclass=False,
     ) -> tuple[tuple, tuple]:
         """
         Plots the scatter plot of a Sklearn dataset and logs to wandb as an image

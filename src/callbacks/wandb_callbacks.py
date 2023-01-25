@@ -366,10 +366,17 @@ class LogDecisionBoundary(Callback):
         norm = plt.Normalize(0.0, 1.0, clip=False)
         flat_label = label.ravel()
         flat_prob = norm(prob.ravel())
-        probcolormap = np.array([mpl.colormaps['Reds'], mpl.colormaps['Blues'],
-                                 mpl.colormaps['Oranges'], mpl.colormaps['Greens'],
-                                 mpl.colormaps['Purples'], mpl.colormaps['Greys']])
-        output = np.empty((flat_label.shape[0], 4), dtype='uint8')
+        probcolormap = np.array(
+            [
+                mpl.colormaps["Reds"],
+                mpl.colormaps["Blues"],
+                mpl.colormaps["Oranges"],
+                mpl.colormaps["Greens"],
+                mpl.colormaps["Purples"],
+                mpl.colormaps["Greys"],
+            ]
+        )
+        output = np.empty((flat_label.shape[0], 4), dtype="uint8")
 
         for i in range(len(flat_label)):
             output[i] = list(probcolormap[flat_label[i]](flat_prob[i], bytes=True))
@@ -384,7 +391,7 @@ class LogDecisionBoundary(Callback):
         y: np.ndarray,
         save: bool = True,
         solid: bool = False,
-        multiclass: bool = False
+        multiclass: bool = False,
     ):
         """Plots and logs decision boundary for a model and dataset (X, y)
 
@@ -409,10 +416,10 @@ class LogDecisionBoundary(Callback):
                 probs = probs.numpy().reshape(xx.shape)
             else:
                 logits = model(batch)
-                logits = logits.reshape((xx.shape[0], xx.shape[1], int(np.max(y)+1)))
+                logits = logits.reshape((xx.shape[0], xx.shape[1], int(np.max(y) + 1)))
                 probs = torch.softmax(logits, dim=-1).cpu()
                 # probs = torch.softmax(model(batch).reshape(xx.shape), dim=-1).cpu()
-                probs = probs.numpy() #.reshape(xx.shape)
+                probs = probs.numpy()  # .reshape(xx.shape)
 
         solid_tag = ""
         if solid and not multiclass:
@@ -442,7 +449,12 @@ class LogDecisionBoundary(Callback):
             pix_colors = self._get_color2(label=y_hat, prob=probs)
             # https: // stackoverflow.com / a / 49834186 / 4699994
             # very important!!! mgrid and meshgrid end up with different results need to transpose.
-            ax.imshow(np.transpose(pix_colors, [1, 0, 2]), extent=(x_start, x_end, y_start, y_end), alpha=0.8, origin='lower')
+            ax.imshow(
+                np.transpose(pix_colors, [1, 0, 2]),
+                extent=(x_start, x_end, y_start, y_end),
+                alpha=0.8,
+                origin="lower",
+            )
 
         #     ax_c = f.colorbar(contour)
         #     ax_c.set_label("$P(y = 1)$")
@@ -451,19 +463,19 @@ class LogDecisionBoundary(Callback):
         if multiclass:
             # establish colors and colormap
             #  * color blind colors, from https://bit.ly/3qJ6LYL
-            redish = '#d73027'
-            orangeish = '#fc8d59'
-            greenish = '#33ff33'
-            blueish = '#4575b4'
-            purpleish = '#b266ff'
-            greyish = '#7F8C8D'
+            redish = "#d73027"
+            orangeish = "#fc8d59"
+            greenish = "#33ff33"
+            blueish = "#4575b4"
+            purpleish = "#b266ff"
+            greyish = "#7F8C8D"
             colormap = np.array([redish, blueish, orangeish, greenish, purpleish, greyish])
             ax.scatter(
                 X[:, 0],
                 X[:, 1],
-                c=colormap[(y.flatten().astype('int'))],
+                c=colormap[(y.flatten().astype("int"))],
                 s=50,
-                edgecolor='white',
+                edgecolor="white",
                 linewidth=1,
             )
 
@@ -719,15 +731,16 @@ class LogSklearnDatasetPlots(Callback):
         else:
             # establish colors and colormap
             #  * color blind colors, from https://bit.ly/3qJ6LYL
-            redish = '#d73027'
-            orangeish = '#fc8d59'
-            greenish = '#33ff33'
-            blueish = '#4575b4'
-            purpleish = '#b266ff'
-            greyish = '#7F8C8D'
+            redish = "#d73027"
+            orangeish = "#fc8d59"
+            greenish = "#33ff33"
+            blueish = "#4575b4"
+            purpleish = "#b266ff"
+            greyish = "#7F8C8D"
             colormap = np.array([redish, blueish, orangeish, greenish, purpleish, greyish])
-            plt.scatter(data_X[:, 0], data_X[:, 1], color=colormap[(data_Y.flatten().astype('int'))])
-
+            plt.scatter(
+                data_X[:, 0], data_X[:, 1], color=colormap[(data_Y.flatten().astype("int"))]
+            )
 
         if x_lim and y_lim:
             plt.xlim(x_lim)
@@ -778,3 +791,15 @@ class AddToConfigEffectiveTrainSize(Callback):
         if "datamodule/train_val_test_split" in logger.experiment.config._items:
             base_n_samples = logger.experiment.config._items["datamodule/train_val_test_split"][0]
             experiment.config.update({"datamodule/train_dataset/n_samples": base_n_samples})
+
+
+if __name__ == "__main__":
+    import hydra
+    import omegaconf
+    import pyrootutils
+
+    root = pyrootutils.setup_root(__file__, pythonpath=True)
+    cfg = omegaconf.OmegaConf.load(
+        root / "configs" / "callbacks" / "default_with_wandb_callbacks.yaml"
+    )
+    _ = hydra.utils.instantiate(cfg)

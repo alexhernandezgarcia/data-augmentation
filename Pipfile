@@ -11,11 +11,11 @@ name = "pytorch_index"
 [packages]
 torch = { version=">=1.10.0",  index="pytorch_index" }
 torchvision = { version=">=0.11.0",  index="pytorch_index" }
-pytorch-lightning = "==1.6.5"
-torchmetrics = "==0.9.2"
-hydra-core = "==1.2.0"
-hydra-colorlog = "==1.2.0"
-hydra-optuna-sweeper = "==1.2.0"
+pytorch-lightning = "~=1.8.3"
+torchmetrics = ">=0.9.2"
+hydra-core = ">=1.2.0"
+hydra-colorlog = ">=1.2.0"
+hydra-optuna-sweeper = ">=1.2.0"
 pyrootutils = "*"
 pre-commit = "*"
 rich = "*"

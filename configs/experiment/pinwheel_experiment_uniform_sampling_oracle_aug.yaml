@@ -25,12 +25,10 @@ seed: 12345
 
 trainer:
   min_epochs: 10
-  max_epochs: 10
+  max_epochs: -1
 
-
-n_classes : 3
+n_classes: 3
 val_test_noise: 0.0
-
 
 datamodule:
   train_dataset:
@@ -46,18 +44,16 @@ datamodule:
     oracle_dataset:
       n_classes: ${n_classes}
 
-
 model:
-  layers: [2,20,30,20,3]
-  multiclass: true
+  layers: [2, 20, 30, 20, 3]
+  task: "multiclass"
+  num_classes: ${n_classes}
 
 logger:
   wandb:
     tags: ${tags} # tags defined above
     project: "template-tests"
     group: ${n_classes}_classes
-
-
 #
 #  criterion:
 #    _target_: torch.nn.CrossEntropyLoss

@@ -26,8 +26,7 @@ trainer:
   min_epochs: 3
   max_epochs: 3
 
-
-n_classes : 3
+n_classes: 3
 
 datamodule:
   train_dataset:
@@ -41,9 +40,8 @@ datamodule:
     oracle_dataset:
       centers: ${n_classes}
 
-
 model:
-  layers: [2,20,30,20,3]
+  layers: [2, 20, 30, 20, 3]
 
   multiclass: true
 
@@ -51,8 +49,6 @@ logger:
   wandb:
     tags: ${tags} # tags defined above
     project: "template-tests"
-
-
 #
 #  criterion:
 #    _target_: torch.nn.CrossEntropyLoss

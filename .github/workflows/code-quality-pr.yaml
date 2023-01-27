@@ -8,7 +8,7 @@ name: Code Quality PR
 
 on:
   pull_request:
-    branches: [hydra-torch-workbench, "release/*"]
+    branches: [main, "release/*"]
 
 jobs:
   code-quality:

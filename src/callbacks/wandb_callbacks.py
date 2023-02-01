@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 from typing import List
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -360,6 +361,29 @@ class LogDecisionBoundary(Callback):
             multiclass=multiclass,
         )
 
+        # get train data
+        train_data = trainer.datamodule.train_dataloader().dataset
+        trainX, trainY = train_data.X, train_data.Y
+
+        self._show_separation(
+            model=model,
+            experiment_logger=experiment,
+            X=trainX,
+            y=trainY,
+            solid=False,
+            multiclass=multiclass,
+            plot_name="on_train_data",
+        )
+        self._show_separation(
+            model=model,
+            experiment_logger=experiment,
+            X=trainX,
+            y=trainY,
+            solid=True,
+            multiclass=multiclass,
+            plot_name="on_train_data",
+        )
+
     @staticmethod
     def _get_color2(label, prob):
         rows, cols = label.shape
@@ -392,6 +416,7 @@ class LogDecisionBoundary(Callback):
         save: bool = True,
         solid: bool = False,
         multiclass: bool = False,
+        plot_name: str = "on_val_data",
     ):
         """Plots and logs decision boundary for a model and dataset (X, y)
 
@@ -492,10 +517,10 @@ class LogDecisionBoundary(Callback):
 
         ax.set(xlabel="$X_1$", ylabel="$X_2$")
         if save:
-            plt.savefig(self.dirpath + f"/decision_boundary{solid_tag}.png")
+            plt.savefig(self.dirpath + f"/decision_boundary_{plot_name}{solid_tag}.png")
 
         experiment_logger.log(
-            {f"decision_boundary/{experiment_logger.name}{solid_tag}": wandb.Image(plt)},
+            {f"decision_boundary/{plot_name}{solid_tag}": wandb.Image(plt)},
             commit=False,
         )
         # close plot

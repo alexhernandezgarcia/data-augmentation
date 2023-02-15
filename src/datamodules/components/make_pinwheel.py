@@ -6,8 +6,14 @@ from sklearn.utils import shuffle as shuffle_data
 
 
 def make_pinwheel(
-        n_samples: int = 500, n_features: int = 2, n_classes: int = 3, noise: float = 0.0, shuffle: bool = False,
-        random_state: int = 0, remove_origin_points: bool = False, radius_from_origin: float = 0.03
+    n_samples: int = 500,
+    n_features: int = 2,
+    n_classes: int = 3,
+    noise: float = 0.0,
+    shuffle: bool = False,
+    random_state: int = 0,
+    remove_origin_points: bool = False,
+    radius_from_origin: float = 0.03,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
 

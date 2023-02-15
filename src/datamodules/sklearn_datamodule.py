@@ -63,7 +63,7 @@ def create_sklearn_datamodule(
                 log.info(f"Data augmentation function provided {aug_function.__repr__()}")
                 X_train, y_train = aug_function(X_train, y_train, **kwargs)
         else:
-            X_train, y_train = data_aug(X_train, y_train,**kwargs )
+            X_train, y_train = data_aug(X_train, y_train, **kwargs)
 
         log.info(f"Training set size after augmentation: {len(y_train)}")
         log.info(

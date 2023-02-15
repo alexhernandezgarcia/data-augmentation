@@ -1,4 +1,4 @@
-from typing import Tuple, Callable
+from typing import Callable, Tuple
 
 import numpy as np
 
@@ -45,12 +45,11 @@ def augment_data(
 
     if oracle_func:
         oracle_data_len = len(X_oracle)
-        Y_oracle = Y_oracle.reshape((oracle_data_len,1))
+        Y_oracle = Y_oracle.reshape((oracle_data_len, 1))
         X_oracle, Y_oracle = oracle_func(X_oracle, Y_oracle)
         # remove original oracle data from the start
         X_oracle, Y_oracle = X_oracle[oracle_data_len:], Y_oracle[oracle_data_len:]
         Y_oracle = np.squeeze(Y_oracle)
-
 
     new_X, new_Y = X.copy(), Y.copy()
     for X_sample, Y_sample in zip(X, Y):

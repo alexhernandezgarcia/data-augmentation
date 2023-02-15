@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 from typing import List
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,7 +11,7 @@ import seaborn as sn
 import torch
 import wandb
 from pytorch_lightning import Callback, Trainer
-from pytorch_lightning.loggers import LoggerCollection, WandbLogger
+from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.utilities import rank_zero_only
 from sklearn import metrics
 from sklearn.metrics import f1_score, precision_score, recall_score
@@ -31,10 +32,10 @@ def get_wandb_logger(trainer: Trainer) -> WandbLogger:
     if isinstance(trainer.logger, WandbLogger):
         return trainer.logger
 
-    if isinstance(trainer.logger, LoggerCollection):
-        for logger in trainer.logger:
-            if isinstance(logger, WandbLogger):
-                return logger
+    # if isinstance(trainer.logger, LoggerCollection):
+    #     for logger in trainer.logger:
+    #         if isinstance(logger, WandbLogger):
+    #             return logger
 
     raise Exception(
         "You are using wandb related callback, but WandbLogger was not found for some reason..."
@@ -45,7 +46,7 @@ class WatchModel(Callback):
     """Make wandb watch model at the beginning of the run."""
 
     def __init__(self, log: str = "gradients", log_freq: int = 100, log_graph=True):
-        self.log = log
+        self.logging_type = log
         self.log_freq = log_freq
         self.log_graph = log_graph
 
@@ -53,7 +54,10 @@ class WatchModel(Callback):
     def on_train_start(self, trainer, pl_module):
         logger = get_wandb_logger(trainer=trainer)
         logger.watch(
-            model=trainer.model, log=self.log, log_freq=self.log_freq, log_graph=self.log_graph
+            model=trainer.model,
+            log=self.logging_type,
+            log_freq=self.log_freq,
+            log_graph=self.log_graph,
         )
 
 
@@ -327,6 +331,9 @@ class LogDecisionBoundary(Callback):
         logger = get_wandb_logger(trainer=trainer)
         experiment = logger.experiment
 
+        # is the dataset multiclass?
+        multiclass = True if pl_module.task == "multiclass" else False
+
         # get validation data
         val_data = trainer.datamodule.test_dataloader().dataset
         valX, valY = val_data.X, val_data.Y
@@ -338,10 +345,43 @@ class LogDecisionBoundary(Callback):
 
         pl_module.eval()  # put model in eval mode
         self._show_separation(
-            model=model, experiment_logger=experiment, X=valX, y=valY, solid=False, multiclass=pl_module.multiclass
+            model=model,
+            experiment_logger=experiment,
+            X=valX,
+            y=valY,
+            solid=False,
+            multiclass=multiclass,
         )
         self._show_separation(
-            model=model, experiment_logger=experiment, X=valX, y=valY, solid=True, multiclass=pl_module.multiclass
+            model=model,
+            experiment_logger=experiment,
+            X=valX,
+            y=valY,
+            solid=True,
+            multiclass=multiclass,
+        )
+
+        # get train data
+        train_data = trainer.datamodule.train_dataloader().dataset
+        trainX, trainY = train_data.X, train_data.Y
+
+        self._show_separation(
+            model=model,
+            experiment_logger=experiment,
+            X=trainX,
+            y=trainY,
+            solid=False,
+            multiclass=multiclass,
+            plot_name="on_train_data",
+        )
+        self._show_separation(
+            model=model,
+            experiment_logger=experiment,
+            X=trainX,
+            y=trainY,
+            solid=True,
+            multiclass=multiclass,
+            plot_name="on_train_data",
         )
 
     @staticmethod
@@ -350,10 +390,17 @@ class LogDecisionBoundary(Callback):
         norm = plt.Normalize(0.0, 1.0, clip=False)
         flat_label = label.ravel()
         flat_prob = norm(prob.ravel())
-        probcolormap = np.array([mpl.colormaps['Reds'], mpl.colormaps['Blues'],
-                                 mpl.colormaps['Oranges'], mpl.colormaps['Greens'],
-                                 mpl.colormaps['Purples'], mpl.colormaps['Greys']])
-        output = np.empty((flat_label.shape[0], 4), dtype='uint8')
+        probcolormap = np.array(
+            [
+                mpl.colormaps["Reds"],
+                mpl.colormaps["Blues"],
+                mpl.colormaps["Oranges"],
+                mpl.colormaps["Greens"],
+                mpl.colormaps["Purples"],
+                mpl.colormaps["Greys"],
+            ]
+        )
+        output = np.empty((flat_label.shape[0], 4), dtype="uint8")
 
         for i in range(len(flat_label)):
             output[i] = list(probcolormap[flat_label[i]](flat_prob[i], bytes=True))
@@ -368,7 +415,8 @@ class LogDecisionBoundary(Callback):
         y: np.ndarray,
         save: bool = True,
         solid: bool = False,
-        multiclass: bool = False
+        multiclass: bool = False,
+        plot_name: str = "on_val_data",
     ):
         """Plots and logs decision boundary for a model and dataset (X, y)
 
@@ -393,10 +441,10 @@ class LogDecisionBoundary(Callback):
                 probs = probs.numpy().reshape(xx.shape)
             else:
                 logits = model(batch)
-                logits = logits.reshape((xx.shape[0], xx.shape[1], int(np.max(y)+1)))
+                logits = logits.reshape((xx.shape[0], xx.shape[1], int(np.max(y) + 1)))
                 probs = torch.softmax(logits, dim=-1).cpu()
                 # probs = torch.softmax(model(batch).reshape(xx.shape), dim=-1).cpu()
-                probs = probs.numpy() #.reshape(xx.shape)
+                probs = probs.numpy()  # .reshape(xx.shape)
 
         solid_tag = ""
         if solid and not multiclass:
@@ -426,7 +474,12 @@ class LogDecisionBoundary(Callback):
             pix_colors = self._get_color2(label=y_hat, prob=probs)
             # https: // stackoverflow.com / a / 49834186 / 4699994
             # very important!!! mgrid and meshgrid end up with different results need to transpose.
-            ax.imshow(np.transpose(pix_colors, [1, 0, 2]), extent=(x_start, x_end, y_start, y_end), alpha=0.8, origin='lower')
+            ax.imshow(
+                np.transpose(pix_colors, [1, 0, 2]),
+                extent=(x_start, x_end, y_start, y_end),
+                alpha=0.8,
+                origin="lower",
+            )
 
         #     ax_c = f.colorbar(contour)
         #     ax_c.set_label("$P(y = 1)$")
@@ -435,19 +488,19 @@ class LogDecisionBoundary(Callback):
         if multiclass:
             # establish colors and colormap
             #  * color blind colors, from https://bit.ly/3qJ6LYL
-            redish = '#d73027'
-            orangeish = '#fc8d59'
-            greenish = '#33ff33'
-            blueish = '#4575b4'
-            purpleish = '#b266ff'
-            greyish = '#7F8C8D'
+            redish = "#d73027"
+            orangeish = "#fc8d59"
+            greenish = "#33ff33"
+            blueish = "#4575b4"
+            purpleish = "#b266ff"
+            greyish = "#7F8C8D"
             colormap = np.array([redish, blueish, orangeish, greenish, purpleish, greyish])
             ax.scatter(
                 X[:, 0],
                 X[:, 1],
-                c=colormap[(y.flatten().astype('int'))],
+                c=colormap[(y.flatten().astype("int"))],
                 s=50,
-                edgecolor='white',
+                edgecolor="white",
                 linewidth=1,
             )
 
@@ -464,10 +517,10 @@ class LogDecisionBoundary(Callback):
 
         ax.set(xlabel="$X_1$", ylabel="$X_2$")
         if save:
-            plt.savefig(self.dirpath + f"/decision_boundary{solid_tag}.png")
+            plt.savefig(self.dirpath + f"/decision_boundary_{plot_name}{solid_tag}.png")
 
         experiment_logger.log(
-            {f"decision_boundary/{experiment_logger.name}{solid_tag}": wandb.Image(plt)},
+            {f"decision_boundary/{plot_name}{solid_tag}": wandb.Image(plt)},
             commit=False,
         )
         # close plot
@@ -629,6 +682,9 @@ class LogSklearnDatasetPlots(Callback):
         logger = get_wandb_logger(trainer=trainer)
         experiment = logger.experiment
 
+        # is the dataset multiclass?
+        multiclass = True if pl_module.task == "multiclass" else False
+
         # plot and log validation data
         dataset = trainer.datamodule.val_dataloader().dataset
         x_lim, y_lim = self.plot_dataset(
@@ -636,7 +692,7 @@ class LogSklearnDatasetPlots(Callback):
             data_X=dataset.X,
             data_Y=dataset.Y,
             experiment_logger=experiment,
-            multiclass=pl_module.multiclass
+            multiclass=multiclass,
         )
 
         # plot and log training data
@@ -648,7 +704,7 @@ class LogSklearnDatasetPlots(Callback):
             experiment_logger=experiment,
             x_lim=x_lim,
             y_lim=y_lim,
-            multiclass=pl_module.multiclass
+            multiclass=multiclass,
         )
 
         # plot and log test data
@@ -660,7 +716,7 @@ class LogSklearnDatasetPlots(Callback):
             experiment_logger=experiment,
             x_lim=x_lim,
             y_lim=y_lim,
-            multiclass=pl_module.multiclass
+            multiclass=multiclass,
         )
 
     def plot_dataset(
@@ -671,7 +727,7 @@ class LogSklearnDatasetPlots(Callback):
         experiment_logger: WandbLogger.experiment,
         x_lim: tuple = None,
         y_lim: tuple = None,
-        multiclass = False
+        multiclass=False,
     ) -> tuple[tuple, tuple]:
         """
         Plots the scatter plot of a Sklearn dataset and logs to wandb as an image
@@ -700,15 +756,16 @@ class LogSklearnDatasetPlots(Callback):
         else:
             # establish colors and colormap
             #  * color blind colors, from https://bit.ly/3qJ6LYL
-            redish = '#d73027'
-            orangeish = '#fc8d59'
-            greenish = '#33ff33'
-            blueish = '#4575b4'
-            purpleish = '#b266ff'
-            greyish = '#7F8C8D'
+            redish = "#d73027"
+            orangeish = "#fc8d59"
+            greenish = "#33ff33"
+            blueish = "#4575b4"
+            purpleish = "#b266ff"
+            greyish = "#7F8C8D"
             colormap = np.array([redish, blueish, orangeish, greenish, purpleish, greyish])
-            plt.scatter(data_X[:, 0], data_X[:, 1], color=colormap[(data_Y.flatten().astype('int'))])
-
+            plt.scatter(
+                data_X[:, 0], data_X[:, 1], color=colormap[(data_Y.flatten().astype("int"))]
+            )
 
         if x_lim and y_lim:
             plt.xlim(x_lim)
@@ -759,3 +816,15 @@ class AddToConfigEffectiveTrainSize(Callback):
         if "datamodule/train_val_test_split" in logger.experiment.config._items:
             base_n_samples = logger.experiment.config._items["datamodule/train_val_test_split"][0]
             experiment.config.update({"datamodule/train_dataset/n_samples": base_n_samples})
+
+
+if __name__ == "__main__":
+    import hydra
+    import omegaconf
+    import pyrootutils
+
+    root = pyrootutils.setup_root(__file__, pythonpath=True)
+    cfg = omegaconf.OmegaConf.load(
+        root / "configs" / "callbacks" / "default_with_wandb_callbacks.yaml"
+    )
+    _ = hydra.utils.instantiate(cfg)

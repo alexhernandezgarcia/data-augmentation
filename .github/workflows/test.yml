@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [hydra-torch-workbench]
+    branches: [main]
   pull_request:
-    branches: [hydra-torch-workbench, "release/*"]
+    branches: [main, "release/*", "dev"]
 
 jobs:
   run_tests:

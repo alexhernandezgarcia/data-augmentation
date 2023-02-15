@@ -205,9 +205,9 @@ class MLPLitModule(pl.LightningModule):
                 "optimizer": optimizer,
                 "lr_scheduler": {
                     "scheduler": scheduler,
-                    "monitor": "val/loss",
+                    "monitor": "train/loss",
                     "interval": "epoch",
-                    "frequency": 1,
+                    "frequency": 1,  # multiple of "trainer.check_val_every_n_epoch".
                 },
             }
         return {"optimizer": optimizer}

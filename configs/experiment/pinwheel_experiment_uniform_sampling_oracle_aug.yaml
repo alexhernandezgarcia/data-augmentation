@@ -34,12 +34,15 @@ datamodule:
   train_dataset:
     n_samples: 300
     n_classes: ${n_classes}
+    remove_origin_points: True
   val_dataset:
     n_classes: ${n_classes}
     noise: ${val_test_noise}
+    remove_origin_points: True
   test_dataset:
     n_classes: ${n_classes}
     noise: ${val_test_noise}
+    remove_origin_points: True
   data_aug:
     oracle_dataset:
       n_classes: ${n_classes}

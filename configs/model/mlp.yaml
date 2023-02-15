@@ -18,5 +18,7 @@ scheduler:
   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
   _partial_: true
   mode: min
-  factor: 0.5 # reduce lr by half
-  patience: 10
+  factor: 0.1 # reduce lr by half
+  patience: 100
+  min_lr: 1e-9
+  verbose: true
